@@ -214,5 +214,3 @@ ss
 if __name__ == "__main__":
     play_game()
 
-# Test
-print("Test 1:")
