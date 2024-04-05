@@ -214,4 +214,4 @@ ss
 if __name__ == "__main__":
     play_game()
 
-#try
+print("Thank you for playing Dots and Boxes!")
