@@ -210,6 +210,9 @@ def play_game():
     # Final scores
     print(f"Final Scores - RED: {game.score[DotsBoxes.RED - 1]}, BLUE: {game.score[DotsBoxes.BLUE - 1]}")
 
-
+ss
 if __name__ == "__main__":
     play_game()
+
+# Test
+print("Test 1:")
