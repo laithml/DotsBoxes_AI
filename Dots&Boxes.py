@@ -131,11 +131,13 @@ class DotsBoxes:
 
             # Print vertical lines and boxes, with row indices for these lines as well
             vertical_line = "  "
-            for j in range(7):
+            for j in range(8):
                 if self.vertical_lines[i][j]:
                     vertical_line += '|'
                 else:
                     vertical_line += ' '
+                if j >= 7:
+                    break
                 # Check box ownership and display accordingly
                 if self.boxes[i][j] == self.RED:
                     vertical_line += ' R '
@@ -143,7 +145,6 @@ class DotsBoxes:
                     vertical_line += ' B '
                 else:
                     vertical_line += '   '
-            vertical_line += '|'
             print(vertical_line)
 
         # Print the last row of horizontal lines with row index
@@ -177,13 +178,17 @@ def play_game():
                 orientation = input("Enter line orientation (h for horizontal(---), v for vertical(|)): ").lower()
                 if orientation not in ['h', 'v']:
                     raise ValueError("Invalid orientation")
-                i = int(input("Enter row index (0-7 for horizontal(---), 0-6 for vertical(|)): "))
-                j = int(input("Enter column index (0-6 for horizontal(---), 0-7 for vertical(|)): "))
+                if(orientation == 'h'):
+                    i = int(input("Enter row index (0-7): "))
+                    j = int(input("Enter column index (0-6): "))
+                else:
+                    i = int(input("Enter row index (0-6): "))
+                    j = int(input("Enter column index (0-7): "))
                 if not (0 <= i < 8) or not (0 <= j < 8):
                     raise ValueError("Invalid indices")
-                if orientation == 'h' and i == 7:
+                if orientation == 'h' and j == 7:
                     raise ValueError("Invalid row index for horizontal line")
-                if orientation == 'v' and j == 7:
+                if orientation == 'v' and i == 7:
                     raise ValueError("Invalid column index for vertical line")
 
                 move_made = game.make_move(orientation, i, j)
