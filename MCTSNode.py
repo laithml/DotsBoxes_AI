@@ -3,7 +3,7 @@ import math
 from DotsBoxes import DotsBoxes
 
 class MCTSNode:
-    def __init__(self, board, parent=None,move = [None, None, None]):
+    def __init__(self, board, parent=None, move=[None, None, None]):
         self.wins = 0
         self.visits = 0
         if parent is None:

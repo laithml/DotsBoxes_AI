@@ -21,11 +21,13 @@ class DotsBoxes:
         for i in range(8):
             for j in range(7):
                 if not self.horizontal_lines[i][j]:
-                    moves.append(('h', i, j))
+                    temp = ['h', i, j]
+                    moves.append(temp)
         for i in range(7):
             for j in range(8):
                 if not self.vertical_lines[i][j]:
-                    moves.append(('v', i, j))
+                    temp = ['v', i, j]
+                    moves.append(temp)
         return moves
 
     def make_move(self, orientation, i, j):
@@ -101,7 +103,7 @@ class DotsBoxes:
 
     def is_game_over(self):
         # Check if the game is over
-        return self.moves == 49
+        return self.legal_moves() == []
 
     def outcome(self):
         # Determine the game's outcome

@@ -71,11 +71,9 @@ def main():
         # Print current scores
         print(f"Scores - RED: {game.score[DotsBoxes.RED - 1]}, BLUE: {game.score[DotsBoxes.BLUE - 1]}")
 
-
         # Current player
         player_color = "RED" if game.current_player == DotsBoxes.RED else "BLUE"
         print(f"{player_color}'s turn")
-
 
         # Get move from current player
         move_made = False
@@ -85,7 +83,7 @@ def main():
                 if game.current_player == DotsBoxes.RED:
                     # MCTSPlayer's turn
                     print("MCTSPlayer (RED) is thinking...")
-                    move = mcts_player.choose_move(10)
+                    move = mcts_player.choose_move(1000)
                     print(f"MCTSPlayer chooses column {move}")
                     move_made = game.make_move(move[0], move[1], move[2])
                     print("MCTSPlayer end")
