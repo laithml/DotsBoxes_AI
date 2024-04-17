@@ -9,6 +9,7 @@ class MCTSPlayer:
     def __init__(self, game_state):
         self.root = MCTSNode(game_state)
 
+# TODO: the best move is not best move !
     def choose_move(self, iterations):
         for _ in range(iterations):
             node = self.selection()
@@ -30,11 +31,12 @@ class MCTSPlayer:
                 curr_node = curr_node.choose_child()
         return curr_node
 
+
     def simulation(self, game_state):
         while game_state.outcome() == DotsBoxes.ONGOING:
             possible_moves = game_state.legal_moves()
             move = random.choice(possible_moves)
-            game_state.make_move(move[0],move[1],move[2])
+            game_state.make_move(move[0], move[1], move[2])
             # if there's a win, for the opponent, play this move and don't let the opponent win
         return game_state.outcome()
 
@@ -44,10 +46,11 @@ class MCTSPlayer:
             curr_node.visits += 1
             if outcome == curr_node.game_state.current_player:
                 curr_node.wins += 1
+            elif outcome == DotsBoxes.DRAW:
+                curr_node.wins += 0.5
             curr_node = curr_node.parent
 
         # DRAW, LOSE, WIN
-
 
     def best_move(self):
         best_win_rate = -float("inf")

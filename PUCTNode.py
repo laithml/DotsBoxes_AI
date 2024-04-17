@@ -2,7 +2,8 @@ import math
 
 from DotsBoxes import DotsBoxes
 
-class MCTSNode:
+
+class PUCTNode:
     def __init__(self, board, parent=None, move=[None, None, None]):
         self.wins = 0
         self.visits = 0
@@ -18,13 +19,13 @@ class MCTSNode:
         return len(self.untried_moves) == 0
 
     def add_child(self, move):
-        curr_state = self.game_state.clone() # no need maybe
+        curr_state = self.game_state.clone()
         curr_state.make_move(move[0], move[1], move[2])
 
         if move in self.untried_moves:
             self.untried_moves.remove(move)
 
-        child = MCTSNode(curr_state, self, move)
+        child = PUCTNode(curr_state, self, move)
         self.children.append(child)
         return child
 
@@ -42,11 +43,9 @@ class MCTSNode:
         for child in self.children:
             win_avg = child.wins / child.visits
             exploration_term = c_param * math.sqrt(log_visits / (1+child.visits))
-
-            uct = win_avg + exploration_term # UCT there's diff
-
-            if uct > best_value:
+            puct = win_avg + exploration_term
+            if puct > best_value:
                 best_child = child
-                best_value = uct
+                best_value = puct
 
         return best_child
