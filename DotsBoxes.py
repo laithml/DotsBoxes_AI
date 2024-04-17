@@ -158,64 +158,113 @@ class DotsBoxes:
         print("  _" + ('_ _ ' * 7))
 
 
-def play_game():
-    game = DotsBoxes()
-    print("Welcome to Dots and Boxes!")
-    game.print_board()
+# def play_game():
+#     game = DotsBoxes()
+#     print("Welcome to Dots and Boxes!")
+#     game.print_board()
+#
+#     while not game.is_game_over():
+#         # Print current scores
+#         print(f"Scores - RED: {game.score[DotsBoxes.RED - 1]}, BLUE: {game.score[DotsBoxes.BLUE - 1]}")
+#
+#         # Current player
+#         player_color = "RED" if game.current_player == DotsBoxes.RED else "BLUE"
+#         print(f"{player_color}'s turn")
+#
+#         # Get move from current player
+#         move_made = False
+#         while not move_made:
+#             try:
+#                 orientation = input("Enter line orientation (h for horizontal(---), v for vertical(|)): ").lower()
+#                 if orientation not in ['h', 'v']:
+#                     raise ValueError("Invalid orientation")
+#                 if(orientation == 'h'):
+#                     i = int(input("Enter row index (0-7): "))
+#                     j = int(input("Enter column index (0-6): "))
+#                 else:
+#                     i = int(input("Enter row index (0-6): "))
+#                     j = int(input("Enter column index (0-7): "))
+#                 if not (0 <= i < 8) or not (0 <= j < 8):
+#                     raise ValueError("Invalid indices")
+#                 if orientation == 'h' and j == 7:
+#                     raise ValueError("Invalid row index for horizontal line")
+#                 if orientation == 'v' and i == 7:
+#                     raise ValueError("Invalid column index for vertical line")
+#
+#                 move_made = game.make_move(orientation, i, j)
+#                 if not move_made:
+#                     print("Illegal move or line already occupied. Try again.")
+#             except ValueError as e:
+#                 print(f"Error: {e}. Please try again.")
+#
+#         game.print_board()
+#
+#         # Check for game outcome
+#         outcome = game.outcome()
+#         if outcome != DotsBoxes.ONGOING:
+#             break
+#
+#     # Game over, declare winner
+#     if outcome == DotsBoxes.RED:
+#         print("Game over! RED wins!")
+#     elif outcome == DotsBoxes.BLUE:
+#         print("Game over! BLUE wins!")
+#     else:
+#         print("Game over! It's a draw!")
+#
+#     # Final scores
+#     print(f"Final Scores - RED: {game.score[DotsBoxes.RED - 1]}, BLUE: {game.score[DotsBoxes.BLUE - 1]}")
+#
+# if __name__ == "__main__":
+#     play_game()
+#
+# print("Thank you for playing Dots and Boxes!")
+#
 
-    while not game.is_game_over():
-        # Print current scores
-        print(f"Scores - RED: {game.score[DotsBoxes.RED - 1]}, BLUE: {game.score[DotsBoxes.BLUE - 1]}")
 
-        # Current player
-        player_color = "RED" if game.current_player == DotsBoxes.RED else "BLUE"
-        print(f"{player_color}'s turn")
 
-        # Get move from current player
-        move_made = False
-        while not move_made:
-            try:
-                orientation = input("Enter line orientation (h for horizontal(---), v for vertical(|)): ").lower()
-                if orientation not in ['h', 'v']:
-                    raise ValueError("Invalid orientation")
-                if(orientation == 'h'):
-                    i = int(input("Enter row index (0-7): "))
-                    j = int(input("Enter column index (0-6): "))
-                else:
-                    i = int(input("Enter row index (0-6): "))
-                    j = int(input("Enter column index (0-7): "))
-                if not (0 <= i < 8) or not (0 <= j < 8):
-                    raise ValueError("Invalid indices")
-                if orientation == 'h' and j == 7:
-                    raise ValueError("Invalid row index for horizontal line")
-                if orientation == 'v' and i == 7:
-                    raise ValueError("Invalid column index for vertical line")
 
-                move_made = game.make_move(orientation, i, j)
-                if not move_made:
-                    print("Illegal move or line already occupied. Try again.")
-            except ValueError as e:
-                print(f"Error: {e}. Please try again.")
 
-        game.print_board()
-
-        # Check for game outcome
-        outcome = game.outcome()
-        if outcome != DotsBoxes.ONGOING:
-            break
-
-    # Game over, declare winner
-    if outcome == DotsBoxes.RED:
-        print("Game over! RED wins!")
-    elif outcome == DotsBoxes.BLUE:
-        print("Game over! BLUE wins!")
-    else:
-        print("Game over! It's a draw!")
-
-    # Final scores
-    print(f"Final Scores - RED: {game.score[DotsBoxes.RED - 1]}, BLUE: {game.score[DotsBoxes.BLUE - 1]}")
-
-if __name__ == "__main__":
-    play_game()
-
-print("Thank you for playing Dots and Boxes!")
+#
+# def main():
+#     game = ConnectFour()
+#     mcts_player = MCTSPlayer(game)
+#
+#
+#     while 1:
+#         while game.outcome() == ConnectFour.ONGOING:
+#             print(game)
+#
+#             if game.current_player == ConnectFour.BLACK:
+#                 # MCTSPlayer's turn
+#                 print("MCTSPlayer (Black) is thinking...")
+#                 move = mcts_player.choose_move(1000)
+#                 print(f"MCTSPlayer chooses column {move}")
+#             else:
+#                 # Human player's turn
+#                 move = int(input("Human player (White), enter your move (column number): "))
+#
+#             game.make_move(move)
+#
+#             if game.current_player == ConnectFour.WHITE:
+#                 mcts_player.root = MCTSNode(game)
+#
+#         print(game)
+#         print('Game over!')
+#         outcome = game.outcome()
+#         if outcome == ConnectFour.WHITE:
+#             print('Human player (White) won!')
+#         elif outcome == ConnectFour.BLACK:
+#             print('MCTSPlayer (Black) won!')
+#         else:
+#             print('The game ended in a draw!')
+#         print("Play again?")
+#         play_again = input("Enter 'yes' or 'no': ")
+#         if play_again.lower() != 'yes':
+#             break
+#         game = ConnectFour()
+#         mcts_player.root = MCTSNode(game)
+#
+#
+# if __name__ == "__main__":
+#     main()
