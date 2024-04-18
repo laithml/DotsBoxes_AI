@@ -1,27 +1,37 @@
-from random import random
-
-import numpy as np
-
+import random
+import torch
 from MCTSNode import MCTSNode
-from DotsBoxes import DotsBoxes
+from PolicyValueNetwork import PolicyValueNetwork
+
+
+def decode_move(index):
+    total_horizontal_moves = 8 * 7
+    if index < total_horizontal_moves:
+        orientation = 'h'
+        row = index // 8
+        column = index % 8
+    else:
+        orientation = 'v'
+        index -= total_horizontal_moves
+        row = index // (8 - 1)
+        column = index % (8 - 1)
+
+    return orientation, row, column
 
 
 class PUCTPlayer:
-    # TODO: decoding the policy from the NN, to move, then make the move,
-    #  there's no need to simulate and no need to choose the best move, because we know the best from the NN
 
     def __init__(self, game_state):
         self.root = MCTSNode(game_state)
+        self.model = PolicyValueNetwork()
 
     def choose_move(self, iterations):
         for _ in range(iterations):
             self.selection_back_propagation()
-
         return self.best_move()
 
     def selection_back_propagation(self):
         curr_node = self.root
-        value = 0
 
         while not curr_node.is_fully_expanded() or curr_node.children:
             if not curr_node.is_fully_expanded():

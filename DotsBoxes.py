@@ -1,6 +1,9 @@
+import numpy as np
+
+
 class DotsBoxes:
     RED = 1
-    BLUE = 2
+    BLUE = -1
     DRAW = 0
     ONGOING = -1
 
@@ -30,6 +33,7 @@ class DotsBoxes:
                     moves.append(temp)
         return moves
 
+    # ( ['h', i, j], 0.8 )
     def make_move(self, orientation, i, j):
         # Apply the move if legal and update the game state
         if orientation == 'h' and not self.horizontal_lines[i][j]:
@@ -100,6 +104,37 @@ class DotsBoxes:
         clone.moves = self.moves
         clone.history = self.history[:]
         return clone
+
+    def reset(self):
+        self.horizontal_lines = [[False] * 7 for _ in range(8)]
+        self.vertical_lines = [[False] * 8 for _ in range(7)]
+        self.boxes = [[0] * 7 for _ in range(7)]
+        self.score = [0, 0]
+        self.current_player = DotsBoxes.RED
+        self.moves = 0
+        self.history = []
+
+    def encode_state(self):
+        # Convert boolean arrays to binary 0-1 matrices and adjust dimensions
+        horizontal_edges = np.array(self.horizontal_lines).astype(int)
+        vertical_edges = np.array(self.vertical_lines).astype(int)
+
+        # Pad vertical edges to match the horizontal edges dimensions
+        vertical_edges_padded = np.zeros((8, 8))
+        vertical_edges_padded[:7, :8] = vertical_edges
+
+        # Pad horizontal edges to match vertical edges dimensions
+        horizontal_edges_padded = np.zeros((8, 8))
+        horizontal_edges_padded[:8, :7] = horizontal_edges
+
+        # Create a channel for current player (1 if RED's turn, -1 if BLUE's turn)
+        player_channel = np.full((8, 8), 1 if self.current_player == DotsBoxes.RED else -1)
+
+        # Stack all layers to form a single state representation
+        encoded_state = np.stack([horizontal_edges_padded, vertical_edges_padded, player_channel],
+                                 axis=0)  # Change here
+
+        return encoded_state
 
     def is_game_over(self):
         # Check if the game is over
