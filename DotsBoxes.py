@@ -118,7 +118,7 @@ class DotsBoxes:
 
     def print_board(self):
         # Column headers
-        print("  " + "   ".join(str(i) for i in range(7)) + " ")
+        print("  " + "   ".join(str(i) for i in range(8)) + " ")
         print("  _" + ('_ _ ' * 7))
 
         for i in range(7):
@@ -180,7 +180,7 @@ def play_game():
                 orientation = input("Enter line orientation (h for horizontal(---), v for vertical(|)): ").lower()
                 if orientation not in ['h', 'v']:
                     raise ValueError("Invalid orientation")
-                if(orientation == 'h'):
+                if (orientation == 'h'):
                     i = int(input("Enter row index (0-7): "))
                     j = int(input("Enter column index (0-6): "))
                 else:
@@ -216,5 +216,3 @@ def play_game():
 
     # Final scores
     print(f"Final Scores - RED: {game.score[DotsBoxes.RED - 1]}, BLUE: {game.score[DotsBoxes.BLUE - 1]}")
-
-

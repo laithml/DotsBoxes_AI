@@ -2,6 +2,7 @@ import math
 
 from DotsBoxes import DotsBoxes
 
+
 class MCTSNode:
     def __init__(self, board, parent=None, move=[None, None, None]):
         self.wins = 0
@@ -13,12 +14,13 @@ class MCTSNode:
         self.game_state = board.clone()
         self.children = []
         self.untried_moves = DotsBoxes.legal_moves(self.game_state)
+        self.prior_prob = 0
 
     def is_fully_expanded(self):
         return len(self.untried_moves) == 0
 
     def add_child(self, move):
-        curr_state = self.game_state.clone() # no need maybe
+        curr_state = self.game_state.clone()
         curr_state.make_move(move[0], move[1], move[2])
 
         if move in self.untried_moves:
@@ -41,12 +43,32 @@ class MCTSNode:
 
         for child in self.children:
             win_avg = child.wins / child.visits
-            exploration_term = c_param * math.sqrt(log_visits / (1+child.visits))
+            exploration_term = c_param * math.sqrt(log_visits / (1 + child.visits))
 
-            uct = win_avg + exploration_term # UCT there's diff
+            uct = win_avg + exploration_term  # UCT there's diff
 
             if uct > best_value:
                 best_child = child
                 best_value = uct
+
+        return best_child
+
+    def choose_child_puct(self, c_param=math.sqrt(2)):
+        if len(self.children) == 0:
+            return None
+
+        log_visits = math.log(self.visits)
+        best_value = -float("inf")
+        best_child = None
+
+        for child in self.children:
+            win_avg = child.wins / child.visit
+            exploration_term = child.prior_prob * c_param * math.sqrt(log_visits / (1 + child.visits))
+
+            puct = win_avg + exploration_term
+
+            if puct > best_value:
+                best_child = child
+                best_value = puct
 
         return best_child

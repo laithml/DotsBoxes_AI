@@ -1,18 +1,20 @@
 from random import random
 
-from DotsBoxes import DotsBoxes
-from PUCTNode import PUCTNode
+from MCTSNode import MCTSNode
 
 
 class PUCTPlayer:
+    # TODO: decoding the policy from the NN, to move, then make the move,
+    #  there's no need to simulate and no need to choose the best move, because we know the best from the NN
+
     def __init__(self, game_state):
-        self.root = PUCTNode(game_state)
+        self.root = MCTSNode(game_state)
 
     def choose_move(self, iterations):
         for _ in range(iterations):
             node = self.selection()
             outcome = self.simulation(node.game_state)
-            self.backpropagation(node, outcome)
+            self.backpropagation(node, outcome)  # TODO: GET THE VALUE
 
         return self.best_move()
 
@@ -24,24 +26,18 @@ class PUCTPlayer:
                 curr_node = curr_node.add_child(move)
                 return curr_node
             else:
-                curr_node = curr_node.choose_child()
+                curr_node = curr_node.choose_child_puct()
         return curr_node
 
-    def simulation(self, game_state):
-        while game_state.outcome() == DotsBoxes.ONGOING:
-            possible_moves = game_state.legal_moves()
-            move = random.choice(possible_moves)
-            game_state.make_move(move[0], move[1], move[2])
-        return game_state.outcome()
-
-    def backpropagation(self, node, outcome):
+    def backpropagation(self, node, outcome, value):
         curr_node = node
         while curr_node.has_parent():
             curr_node.visits += 1
-            if outcome == curr_node.game_state.current_player:
-                curr_node.wins += 1
-            elif outcome == DotsBoxes.DRAW:
-                curr_node.wins += 0.5
+            curr_player = curr_node.game_state.current_player
+            if outcome == curr_player:
+                curr_node.wins += value
+            elif outcome == curr_player.other_player(curr_player):
+                curr_node.wins += (1 - value)
             curr_node = curr_node.parent
 
     def best_move(self):

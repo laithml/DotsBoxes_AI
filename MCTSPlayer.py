@@ -86,7 +86,7 @@ def main():
                 if game.current_player == DotsBoxes.RED:
                     # MCTSPlayer's turn
                     print("MCTSPlayer (RED) is thinking...")
-                    move = mcts_player.choose_move(1000)
+                    move = mcts_player.choose_move(10000)
                     print(f"MCTSPlayer chooses column {move}")
                     move_made = game.make_move(move[0], move[1], move[2])
                     print("MCTSPlayer end")
