@@ -38,37 +38,42 @@ class PUCTPlayer:
                 move = random.choice(curr_node.untried_moves)
                 curr_node = curr_node.add_child(move)
 
-                #TODO: put the situation inside the network to get the value and p
-                value,p = PolicyValueNetwork.forward(curr_node.game_state)
+                # Get the encoded state and use the model to predict value and policy
+                game_state_encoded = curr_node.game_state.encode_state()
+                game_state_encoded = torch.tensor(game_state_encoded, dtype=torch.float32).unsqueeze(
+                    0)  # Add batch dimension
+                policy_output, value = self.model.forward(game_state_encoded)
+                policy_output = policy_output.detach().numpy().flatten()  # Convert to numpy and flatten
 
-                # p = np.zeros(len(curr_node.game_state.legal_moves())) #we should have it from the network
-
-                curr_node.Q = value
+                curr_node.Q = value.item()
                 curr_node.N = 1
-                possible_moves = curr_node.game_state.legal_moves()
 
-                for i in range(len(possible_moves)):
-                    possible_moves[i].P = p[i]
+                # Decode all moves and assign probabilities
+                decoded_moves = [(decode_move(i), policy_output[i]) for i in
+                                 range(len(policy_output))]
+                move_probs = {move: prob for move, prob in decoded_moves if move in curr_node.untried_moves}
+
+                # Update untried moves with probabilities
+                for move in curr_node.untried_moves:
+                    if move in move_probs:
+                        move.probability = move_probs[move]
+
                 break
             else:
-                curr_node = curr_node.choose_child_puct()
+                curr_node = curr_node.choose_child()
 
         # back propagation
-        while curr_node != None:
-            curr_node.visits += 1
-            curr_player = curr_node.game_state.current_player
-            if value == curr_player:
-                curr_node.wins += value
-            elif value == curr_player.other_player(curr_player):
-                curr_node.wins += (1 - value)
+        while curr_node.parent != None:
+            par = curr_node.parent
+            par.N += 1
+            par.Q += (1 / par.N) * (par.Q - curr_node.Q)
             curr_node = curr_node.parent
 
     def best_move(self):
-        best_win_rate = -float("inf")
+        best_N = -float("inf")
         best_move = None
         for child in self.root.children:
-            win_rate = child.wins / child.visits
-            if win_rate > best_win_rate:
-                best_win_rate = win_rate
+            if child.N > best_N:
+                best_N = child.N
                 best_move = child.move
         return best_move
