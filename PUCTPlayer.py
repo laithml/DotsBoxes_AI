@@ -28,9 +28,10 @@ class PUCTPlayer:
                 move = random.choice(curr_node.untried_moves)
                 curr_node = curr_node.add_child(move)
 
-                #TODO: put the situation inside the network to get the value,
-                value = 0 #from the netwotk
-                p = np.zeros(len(curr_node.game_state.legal_moves())) #we should have it from the network
+                #TODO: put the situation inside the network to get the value and p
+                value,p = PolicyValueNetwork.forward(curr_node.game_state)
+
+                # p = np.zeros(len(curr_node.game_state.legal_moves())) #we should have it from the network
 
                 curr_node.Q = value
                 curr_node.N = 1

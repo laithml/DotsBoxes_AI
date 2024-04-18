@@ -16,6 +16,7 @@ class PolicyValueNetwork(nn.Module):
         self.value_head = nn.Linear(256, 1)
 
     def forward(self, x):
+        #TODO: skip connection resNet
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
         x = F.relu(self.conv3(x))
