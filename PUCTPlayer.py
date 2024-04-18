@@ -1,5 +1,7 @@
 import random
+
 import torch
+
 from MCTSNode import MCTSNode
 from PolicyValueNetwork import PolicyValueNetwork
 
@@ -55,8 +57,9 @@ class PUCTPlayer:
 
                 # Update untried moves with probabilities
                 for move in curr_node.untried_moves:
-                    if move in move_probs:
-                        move.probability = move_probs[move]
+                    tuple_move = tuple(move)
+                    if tuple_move in move_probs:
+                        move.probability = move_probs[tuple_move]
 
                 break
             else:
