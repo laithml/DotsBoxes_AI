@@ -33,7 +33,7 @@ class PUCTPlayer:
     def choose_move(self, iterations):
         for _ in range(iterations):
             self.selection_back_propagation()
-            self.print_tree()
+            # self.print_tree()
         return self.best_move()
 
     def selection_back_propagation(self):
@@ -41,13 +41,13 @@ class PUCTPlayer:
 
         while not curr_node.is_fully_expanded() or curr_node.children:
             if not curr_node.is_fully_expanded():
-                move = random.choice(curr_node.untried_moves)
-                curr_node = curr_node.add_child(move)
+                move = random.choice(curr_node.untried_moves)  # Select a move from untried moves
+                curr_node.untried_moves.remove(move)  # Remove the selected move from untried moves
+                curr_node = curr_node.add_child(move)  # Expand this move into a new child node
 
                 # Get the encoded state and use the model to predict value and policy
                 game_state_encoded = curr_node.game_state.encode_state()
-                game_state_encoded = torch.tensor(game_state_encoded, dtype=torch.float32).unsqueeze(
-                    0)  # Add batch dimension
+                game_state_encoded = torch.tensor(game_state_encoded, dtype=torch.float32).unsqueeze(0)
                 if torch.cuda.is_available():
                     game_state_encoded = game_state_encoded.cuda()
                 policy_output, value = self.model.forward(game_state_encoded)
@@ -57,8 +57,7 @@ class PUCTPlayer:
                 curr_node.N = 1
 
                 # Decode all moves and assign probabilities
-                decoded_moves = [(decode_move(i), policy_output[i]) for i in
-                                 range(len(policy_output))]
+                decoded_moves = [(decode_move(i), policy_output[i]) for i in range(len(policy_output))]
                 move_probs = {move: prob for move, prob in decoded_moves if move in curr_node.untried_moves}
 
                 # Update untried moves with probabilities
@@ -72,7 +71,7 @@ class PUCTPlayer:
                 curr_node = curr_node.choose_child()
 
         # back propagation
-        while curr_node.parent != None:
+        while curr_node.parent is not None:
             par = curr_node.parent
             par.N += 1
             par.Q += (1 / par.N) * (par.Q - curr_node.Q)
