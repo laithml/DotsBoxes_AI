@@ -11,7 +11,7 @@ class DotsBoxes:
         # Initialize horizontal and vertical lines
         self.horizontal_lines = [[False] * 7 for _ in range(8)]
         self.vertical_lines = [[False] * 8 for _ in range(7)]
-        # Initialize box ownership (0: unclaimed, 1: RED, 2: BLUE)
+        # Initialize box ownership (0: unclaimed, 1: RED, -1: BLUE)
         self.boxes = [[0] * 7 for _ in range(7)]
         self.score = [0, 0]  # RED, BLUE
         self.current_player = DotsBoxes.RED
@@ -35,21 +35,31 @@ class DotsBoxes:
 
     # ( ['h', i, j], 0.8 )
     def make_move(self, orientation, i, j):
-        # Apply the move if legal and update the game state
-        if orientation == 'h' and not self.horizontal_lines[i][j]:
-            self.horizontal_lines[i][j] = True
-        elif orientation == 'v' and not self.vertical_lines[i][j]:
-            self.vertical_lines[i][j] = True
-        else:
-            return False  # Illegal move
+        valid = False
+        if orientation == 'h':
+            if i < 8 and j < 7 and not self.horizontal_lines[i][j]:  # Validate indices and move availability
+                self.horizontal_lines[i][j] = True
+                valid = True
+        elif orientation == 'v':
+            if i < 7 and j < 8 and not self.vertical_lines[i][j]:  # Validate indices and move availability
+                self.vertical_lines[i][j] = True
+                valid = True
 
+        if not valid:
+            print(f"Attempted illegal or repeated move: {orientation} at ({i}, {j})")
+            return False
+
+        # Process boxes potentially completed by this move
         boxes_completed = self.update_boxes_after_move(orientation, i, j)
         if boxes_completed:
             self.score[self.current_player - 1] += boxes_completed
         else:
+            # Change turns if no boxes were completed
             self.current_player = self.other_player(self.current_player)
+
         self.moves += 1
         self.history.append((orientation, i, j))
+        # print(f"Move made: {orientation} at ({i}, {j}), boxes completed: {boxes_completed}")
         return True
 
     def update_boxes_after_move(self, orientation, i, j):

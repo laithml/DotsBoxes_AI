@@ -1,5 +1,8 @@
 from DotsBoxes import DotsBoxes
 from PUCTPlayer import PUCTPlayer
+import torch
+import torch.optim as optim
+import torch.nn.functional as F
 
 
 class GameController:
@@ -7,6 +10,8 @@ class GameController:
         self.game = DotsBoxes()
         self.ai = PUCTPlayer(self.game)
         self.model = self.ai.model
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)  # Example optimizer
+        self.data = []  # Store training data
 
     def train(self, iterations, epochs):
         """ Train the model using self-play for a given number of iterations and epochs. """
@@ -19,6 +24,22 @@ class GameController:
             self.model.train()
             print("Training complete.")
 
+    def train_model(self):
+        """ Train the model on the accumulated data. """
+        self.model.train()
+        for game_state, target_policy, target_value in self.data:
+            self.optimizer.zero_grad()
+            input_tensor = torch.tensor(game_state, dtype=torch.float32).unsqueeze(0)
+            if torch.cuda.is_available():
+                input_tensor = input_tensor.cuda()  # Move tensor to GPU
+            policy_output, value_output = self.model(input_tensor)
+            loss_policy = F.cross_entropy(policy_output, torch.tensor(target_policy).long().cuda())
+            loss_value = F.mse_loss(value_output.squeeze(), torch.tensor([target_value], dtype=torch.float32).cuda())
+
+            loss = loss_policy + loss_value
+            loss.backward()
+            self.optimizer.step()
+
     def self_play(self):
         """ Simulate a game where the AI plays against itself. """
         print("Starting a self-play session...")
@@ -30,45 +51,43 @@ class GameController:
     def play_game(self):
         """ Play a game against the AI. """
         print("Welcome to Dots and Boxes!")
-        self.game.print_board()
+        self.game.reset()
 
+        self.game.print_board()
         while not self.game.is_game_over():
             # Print current scores
-            print(f"Scores - RED: {self.game.score[self.game.RED - 1]}, BLUE: {self.game.score[self.game.BLUE - 1]}")
+            print(f"Scores - RED: {self.game.score[0]}, BLUE: {self.game.score[1]}")
 
             # Current player
             player_color = "RED" if self.game.current_player == self.game.RED else "BLUE"
             print(f"{player_color}'s turn")
 
-            # Get move from current player
-            move_made = False
-            while not move_made:
-                try:
-                    orientation_input = input(
-                        "Enter line orientation (h for horizontal(---), v for vertical(|)): ").lower()
-                    orientation = 0 if orientation_input == 'h' else 1  # Assume 0 is horizontal and 1 is vertical for the move tuple
-                    if orientation_input not in ['h', 'v']:
-                        raise ValueError("Invalid orientation")
+            if self.game.current_player == self.game.BLUE:  # Assuming BLUE is the AI
+                # AI makes its move
+                move = self.ai.choose_move(10)
+                self.game.make_move(move[0], move[1], move[2])
+                print("AI played:", move)
+            else:
+                # Get move from human player
+                move_made = False
+                while not move_made:
+                    try:
+                        orientation_input = input(
+                            "Enter line orientation (h for horizontal(---), v for vertical(|)): ").lower()
+                        if orientation_input not in ['h', 'v']:
+                            raise ValueError("Invalid orientation")
 
-                    if orientation_input == 'h':
-                        i = int(input("Enter row index (0-7): "))
-                        j = int(input("Enter column index (0-6): "))
-                    else:
-                        i = int(input("Enter row index (0-6): "))
-                        j = int(input("Enter column index (0-7): "))
+                        row = int(input("Enter row index: "))
+                        col = int(input("Enter column index: "))
 
-                    if not (0 <= i < 8) or not (0 <= j < 8):
-                        raise ValueError("Invalid indices")
-                    if orientation_input == 'h' and j == 7:
-                        raise ValueError("Invalid column index for horizontal line")
-                    if orientation_input == 'v' and i == 7:
-                        raise ValueError("Invalid row index for vertical line")
+                        if not (0 <= row < 8 and 0 <= col < 8):
+                            raise ValueError("Invalid indices")
 
-                    move_made = self.game.make_move(orientation, i, j)
-                    if not move_made:
-                        print("Illegal move or line already occupied. Try again.")
-                except ValueError as e:
-                    print(f"Error: {e}. Please try again.")
+                        move_made = self.game.make_move(orientation_input, row, col)
+                        if not move_made:
+                            print("Illegal move or line already occupied. Try again.")
+                    except ValueError as e:
+                        print(f"Error: {e}. Please try again.")
 
             self.game.print_board()
 
@@ -86,7 +105,7 @@ class GameController:
             print("Game over! It's a draw!")
 
         # Final scores
-        print(f"Final Scores - RED: {self.game.score[self.game.RED - 1]}, BLUE: {self.game.score[self.game.BLUE - 1]}")
+        print(f"Final Scores - RED: {self.game.score[self.game.RED]}, BLUE: {self.game.score[self.game.BLUE]}")
 
     def menu(self):
         """ Display menu options to the user. """

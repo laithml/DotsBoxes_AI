@@ -2,6 +2,7 @@ import random
 
 import torch
 
+from DotsBoxes import DotsBoxes
 from MCTSNode import MCTSNode
 from PolicyValueNetwork import PolicyValueNetwork
 
@@ -26,10 +27,13 @@ class PUCTPlayer:
     def __init__(self, game_state):
         self.root = MCTSNode(game_state)
         self.model = PolicyValueNetwork()
+        if torch.cuda.is_available():
+            self.model = self.model.cuda()
 
     def choose_move(self, iterations):
         for _ in range(iterations):
             self.selection_back_propagation()
+            self.print_tree()
         return self.best_move()
 
     def selection_back_propagation(self):
@@ -44,8 +48,10 @@ class PUCTPlayer:
                 game_state_encoded = curr_node.game_state.encode_state()
                 game_state_encoded = torch.tensor(game_state_encoded, dtype=torch.float32).unsqueeze(
                     0)  # Add batch dimension
+                if torch.cuda.is_available():
+                    game_state_encoded = game_state_encoded.cuda()
                 policy_output, value = self.model.forward(game_state_encoded)
-                policy_output = policy_output.detach().numpy().flatten()  # Convert to numpy and flatten
+                policy_output = policy_output.detach().cpu().numpy().flatten()
 
                 curr_node.Q = value.item()
                 curr_node.N = 1
@@ -73,10 +79,31 @@ class PUCTPlayer:
             curr_node = curr_node.parent
 
     def best_move(self):
+        if not self.root.children:
+            print("No moves explored.")
+            return None  # Or handle this case as needed
+
         best_N = -float("inf")
         best_move = None
         for child in self.root.children:
             if child.N > best_N:
                 best_N = child.N
                 best_move = child.move
+
+        if best_move is not None:
+            print("Best move:", best_move)
+        else:
+            print("No valid move found.")
         return best_move
+
+    def print_tree(self, node=None, indent=""):
+        if node is None:
+            node = self.root
+            print("Root node (current player is {}):".format(
+                "RED" if node.game_state.current_player == DotsBoxes.RED else "BLUE"))
+
+        for child in node.children:
+            move_str = "Move: {}, N: {}, Q: {:.2f}".format(child.move, child.N, child.Q)
+            print(indent + move_str)
+            if child.children:
+                self.print_tree(child, indent + "    ")
