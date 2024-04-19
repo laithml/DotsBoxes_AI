@@ -8,6 +8,17 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 
+def encode_move(orientation, row, column):
+    if orientation == 'h':
+        # Calculate index for horizontal moves
+        return row * 7 + column
+    elif orientation == 'v':
+        # Calculate index for vertical moves, starting at 56
+        return 56 + row * 8 + column
+    else:
+        raise ValueError("Invalid move orientation")
+
+
 class GameController:
     def __init__(self):
         self.game = DotsBoxes()
@@ -55,7 +66,7 @@ class GameController:
         self.data = []
 
     def self_play(self):
-        """ Simulate a game where the AI plays against itself. """
+        """ Simulate a game where the AI plays against itself and collect training data. """
         print("Starting a self-play session...")
         if os.path.exists("model.pth"):
             self.load_model("model.pth")
@@ -65,38 +76,38 @@ class GameController:
         puct_player2 = PUCTPlayer(self.game)
 
         while not self.game.is_game_over():
-
-            # Print current scores
-            print(f"Scores - RED: {self.game.score[0]}, BLUE: {self.game.score[1]}")
-
             # Current player
             player_color = "RED" if self.game.current_player == DotsBoxes.RED else "BLUE"
-            print(f"{player_color}'s turn")
+            print(f"{player_color}'s turn - Scores RED: {self.game.score[0]}, BLUE: {self.game.score[1]}")
 
-            # Get move from current player
-            move_made = False
-            while not move_made:
-                if self.game.current_player == DotsBoxes.RED:
-                    # puct_player1's turn
-                    move = puct_player1.choose_move(1000)
-                    move_made = self.game.make_move(move[0], move[1], move[2])
-                    self.game.print_board()
-                else:
-                    # puct_player2's turn
-                    move = puct_player2.choose_move(1000)
-                    move_made = self.game.make_move(move[0], move[1], move[2])
-                    self.game.print_board()
+            if self.game.current_player == DotsBoxes.RED:
+                puct_player = puct_player1
+            else:
+                puct_player = puct_player2
 
-                if self.game.current_player == DotsBoxes.RED:
-                    puct_player1.root = MCTSNode(self.game)
-                else:
-                    puct_player2.root = MCTSNode(self.game)
+            # AI chooses and makes a move
+            move = puct_player.choose_move(1000)
+            valid_move = self.game.make_move(move[0], move[1], move[2])
+            self.game.print_board()
 
+            if valid_move:
+                # Encode the move and the resulting game state
+                game_state_encoded = self.game.encode_state()
+                move_index = encode_move(move[0], move[1], move[2])
+                policy_output = [0] * 112  # Total possible moves
+                policy_output[move_index] = 1
+                # Append to data set (state, policy, reward)
+                self.data.append((game_state_encoded, policy_output, self.game.current_player))
+
+            # Update MCTS roots after the move
+            puct_player.root = MCTSNode(self.game)
+
+            # Check game outcome
             outcome = self.game.outcome()
             if outcome != DotsBoxes.ONGOING:
                 break
-            # Game over, declare winner
 
+        # Game over, declare winner
         if outcome == DotsBoxes.RED:
             print("Game over! RED wins!")
         elif outcome == DotsBoxes.BLUE:
