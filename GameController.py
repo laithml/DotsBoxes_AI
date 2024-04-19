@@ -1,6 +1,7 @@
 import os
 
 from DotsBoxes import DotsBoxes
+from MCTSNode import MCTSNode
 from PUCTPlayer import PUCTPlayer
 import torch
 import torch.optim as optim
@@ -55,10 +56,48 @@ class GameController:
     def self_play(self):
         """ Simulate a game where the AI plays against itself. """
         print("Starting a self-play session...")
+
         self.game.reset()
+        puct_player1 = PUCTPlayer(self.game)
+        puct_player2 = PUCTPlayer(self.game)
+
         while not self.game.is_game_over():
-            move = self.ai.choose_move(100)
-            self.game.make_move(move[0], move[1], move[2])
+            # Get move from current player
+            move_made = False
+            while not move_made:
+                if self.game.current_player == DotsBoxes.RED:
+                    # puct_player1's turn
+                    move = puct_player1.choose_move(1000)
+                    move_made = self.game.make_move(move[0], move[1], move[2])
+                    self.game.print_board()
+                else:
+                    # puct_player1's turn
+                    move = puct_player2.choose_move(1000)
+                    move_made = self.game.make_move(move[0], move[1], move[2])
+                    self.game.print_board()
+
+                if self.game.current_player == DotsBoxes.RED:
+                    puct_player1.root = MCTSNode(self.game)
+                else:
+                    puct_player2.root = MCTSNode(self.game)
+
+            outcome = self.game.outcome()
+            if outcome != DotsBoxes.ONGOING:
+                break
+            # Game over, declare winner
+
+        if outcome == DotsBoxes.RED:
+            print("Game over! RED wins!")
+        elif outcome == DotsBoxes.BLUE:
+            print("Game over! BLUE wins!")
+        else:
+            print("Game over! It's a draw!")
+        # Final scores
+        print(f"Final Scores - RED: {self.game.score[DotsBoxes.RED - 1]}, BLUE: {self.game.score[DotsBoxes.BLUE - 1]}")
+
+    # while not self.game.is_game_over():
+    #         move = self.ai.choose_move(100)
+    #         self.game.make_move(move[0], move[1], move[2])
 
     def play_game(self):
         """ Play a game against the AI. """

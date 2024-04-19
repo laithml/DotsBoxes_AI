@@ -57,7 +57,6 @@ class DotsBoxes:
             self.current_player = self.other_player(self.current_player)
         self.moves += 1
         self.history.append((orientation, i, j))
-        print(f"Move made: {orientation} at ({i}, {j}), boxes completed: {boxes_completed}")
         return True
 
     def update_boxes_after_move(self, orientation, i, j):
@@ -223,7 +222,7 @@ def play_game():
                 orientation = input("Enter line orientation (h for horizontal(---), v for vertical(|)): ").lower()
                 if orientation not in ['h', 'v']:
                     raise ValueError("Invalid orientation")
-                if (orientation == 'h'):
+                if orientation == 'h':
                     i = int(input("Enter row index (0-7): "))
                     j = int(input("Enter column index (0-6): "))
                 else:
