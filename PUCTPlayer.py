@@ -41,7 +41,6 @@ class PUCTPlayer:
         while not curr_node.is_fully_expanded() or curr_node.children:
             if not curr_node.is_fully_expanded():
 
-                #added-maybe no need
                 curr_node.untried_moves = DotsBoxes.legal_moves(curr_node.game_state)
 
                 move = random.choice(curr_node.untried_moves)  # Select a move from untried moves
@@ -84,7 +83,7 @@ class PUCTPlayer:
     def best_move(self):
         if not self.root.children:
             print("No moves explored.")
-            return None  # Or handle this case as needed
+            return None
 
         best_N = -float("inf")
         best_move = None

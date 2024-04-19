@@ -23,7 +23,7 @@ class GameController:
                 self.self_play()
             print("Training on gathered data...")
             self.train_model()
-        self.model.save("model.pth", self.optimizer)
+            self.model.save("model.pth", self.optimizer)
         print("Training complete.")
 
     def load_model(self, path):
@@ -57,6 +57,8 @@ class GameController:
     def self_play(self):
         """ Simulate a game where the AI plays against itself. """
         print("Starting a self-play session...")
+        if os.path.exists("model.pth"):
+            self.load_model("model.pth")
 
         self.game.reset()
         puct_player1 = PUCTPlayer(self.game)
@@ -175,7 +177,7 @@ class GameController:
     def menu(self):
         """ Display menu options to the user. """
         option = 0
-        while option not in [1, 2, 9]:
+        while option != 9:
             print("\n1. Train the AI")
             print("2. Play against the AI")
             print("9. Exit")

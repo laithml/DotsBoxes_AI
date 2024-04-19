@@ -33,7 +33,7 @@ class DotsBoxes:
                     moves.append(temp)
         return moves
 
-    # ( ['h', i, j], 0.8 )
+
     def make_move(self, orientation, i, j):
         valid = False
         if orientation == 'h' and i < 8 and j < 7:
