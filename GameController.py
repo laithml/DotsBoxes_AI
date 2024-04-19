@@ -62,6 +62,15 @@ class GameController:
         puct_player2 = PUCTPlayer(self.game)
 
         while not self.game.is_game_over():
+
+            # Print current scores
+            print(f"Scores - RED: {self.game.score[0]}, BLUE: {self.game.score[1]}")
+
+            # Current player
+            player_color = "RED" if self.game.current_player == DotsBoxes.RED else "BLUE"
+            print(f"{player_color}'s turn")
+
+
             # Get move from current player
             move_made = False
             while not move_made:
@@ -93,70 +102,77 @@ class GameController:
         else:
             print("Game over! It's a draw!")
         # Final scores
-        print(f"Final Scores - RED: {self.game.score[DotsBoxes.RED - 1]}, BLUE: {self.game.score[DotsBoxes.BLUE - 1]}")
+        print(f"Final Scores - RED: {self.game.score[0]}, BLUE: {self.game.score[1]}")
 
     # while not self.game.is_game_over():
     #         move = self.ai.choose_move(100)
     #         self.game.make_move(move[0], move[1], move[2])
 
     def play_game(self):
-        """ Play a game against the AI. """
-        print("Welcome to Dots and Boxes!")
         self.game.reset()
-
+        puct_player = PUCTPlayer(self.game)
+        print("Welcome to Dots and Boxes!")
         self.game.print_board()
         while not self.game.is_game_over():
             # Print current scores
             print(f"Scores - RED: {self.game.score[0]}, BLUE: {self.game.score[1]}")
 
             # Current player
-            player_color = "RED" if self.game.current_player == self.game.RED else "BLUE"
+            player_color = "RED" if self.game.current_player == DotsBoxes.RED else "BLUE"
             print(f"{player_color}'s turn")
 
-            if self.game.current_player == self.game.BLUE:  # Assuming BLUE is the AI
-                # AI makes its move
-                move = self.ai.choose_move(10)
-                self.game.make_move(move[0], move[1], move[2])
-                print("AI played:", move)
-            else:
-                # Get move from human player
-                move_made = False
-                while not move_made:
+            # Get move from current player
+            move_made = False
+            while not move_made:
+                if self.game.current_player == DotsBoxes.RED:
+                    # MCTSPlayer's turn
+                    print("MCTSPlayer (RED) is thinking...")
+                    move = puct_player.choose_move(1000)
+                    print(f"MCTSPlayer chooses column {move}")
+                    move_made = self.game.make_move(move[0], move[1], move[2])
+                    print("MCTSPlayer end")
+                else:
                     try:
-                        orientation_input = input(
-                            "Enter line orientation (h for horizontal(---), v for vertical(|)): ").lower()
-                        if orientation_input not in ['h', 'v']:
+                        orientation = input("Enter line orientation (h for horizontal(---), v for vertical(|)): ").lower()
+                        if orientation not in ['h', 'v']:
                             raise ValueError("Invalid orientation")
-
-                        row = int(input("Enter row index: "))
-                        col = int(input("Enter column index: "))
-
-                        if not (0 <= row < 8 and 0 <= col < 8):
+                        if (orientation == 'h'):
+                            i = int(input("Enter row index (0-7): "))
+                            j = int(input("Enter column index (0-6): "))
+                        else:
+                            i = int(input("Enter row index (0-6): "))
+                            j = int(input("Enter column index (0-7): "))
+                        if not (0 <= i < 8) or not (0 <= j < 8):
                             raise ValueError("Invalid indices")
-
-                        move_made = self.game.make_move(orientation_input, row, col)
+                        if orientation == 'h' and j == 7:
+                            raise ValueError("Invalid row index for horizontal line")
+                        if orientation == 'v' and i == 7:
+                            raise ValueError("Invalid column index for vertical line")
+                        move_made = self.game.make_move(orientation, i, j)
                         if not move_made:
                             print("Illegal move or line already occupied. Try again.")
                     except ValueError as e:
                         print(f"Error: {e}. Please try again.")
 
-            self.game.print_board()
+                if self.game.current_player == DotsBoxes.RED:
+                    puct_player.root = MCTSNode(self.game)
 
+            self.game.print_board()
             # Check for game outcome
             outcome = self.game.outcome()
-            if outcome != self.game.ONGOING:
+            if outcome != DotsBoxes.ONGOING:
                 break
 
         # Game over, declare winner
-        if outcome == self.game.RED:
+        if outcome == DotsBoxes.RED:
             print("Game over! RED wins!")
-        elif outcome == self.game.BLUE:
+        elif outcome == DotsBoxes.BLUE:
             print("Game over! BLUE wins!")
         else:
             print("Game over! It's a draw!")
-
         # Final scores
-        print(f"Final Scores - RED: {self.game.score[self.game.RED]}, BLUE: {self.game.score[self.game.BLUE]}")
+        print(f"Final Scores - RED: {self.game.score[0]}, BLUE: {self.game.score[1]}")
+
 
     def menu(self):
         """ Display menu options to the user. """

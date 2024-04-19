@@ -52,7 +52,11 @@ class DotsBoxes:
         # Assuming update_boxes_after_move returns number of boxes completed
         boxes_completed = self.update_boxes_after_move(orientation, i, j)
         if boxes_completed > 0:
-            self.score[self.current_player - 1] += boxes_completed
+            if self.current_player == self.RED:
+                self.score[0] += boxes_completed
+            else:
+                self.score[1] += boxes_completed
+
         else:
             self.current_player = self.other_player(self.current_player)
         self.moves += 1
@@ -209,7 +213,7 @@ def play_game():
 
     while not game.is_game_over():
         # Print current scores
-        print(f"Scores - RED: {game.score[DotsBoxes.RED - 1]}, BLUE: {game.score[DotsBoxes.BLUE - 1]}")
+        print(f"Scores - RED: {game.score[0]}, BLUE: {game.score[1]}")
 
         # Current player
         player_color = "RED" if game.current_player == DotsBoxes.RED else "BLUE"
@@ -257,4 +261,4 @@ def play_game():
         print("Game over! It's a draw!")
 
     # Final scores
-    print(f"Final Scores - RED: {game.score[DotsBoxes.RED - 1]}, BLUE: {game.score[DotsBoxes.BLUE - 1]}")
+    print(f"Final Scores - RED: {game.score[0]}, BLUE: {game.score[1]}")
