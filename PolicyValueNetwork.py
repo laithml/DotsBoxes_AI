@@ -24,3 +24,13 @@ class PolicyValueNetwork(nn.Module):
         policy_output = F.softmax(policy_logits, dim=1)
         value_output = torch.tanh(self.value_head(x))
         return policy_output, value_output
+
+    def save(self, filename="model_checkpoint.pth"):
+        """ Saves the model weights to a file. """
+        torch.save(self.state_dict(), filename)
+        print(f"Model weights have been saved to {filename}")
+
+    def load(self, filename, device='cpu'):
+        """ Loads the model weights from a file. """
+        self.load_state_dict(torch.load(filename, map_location=device))
+        print(f"Model weights have been loaded from {filename}")

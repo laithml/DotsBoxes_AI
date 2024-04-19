@@ -1,3 +1,5 @@
+import os
+
 from DotsBoxes import DotsBoxes
 from PUCTPlayer import PUCTPlayer
 import torch
@@ -14,15 +16,19 @@ class GameController:
         self.data = []  # Store training data
 
     def train(self, iterations, epochs):
-        """ Train the model using self-play for a given number of iterations and epochs. """
         for epoch in range(epochs):
             print(f"Epoch {epoch + 1}/{epochs}")
             for _ in range(iterations):
                 self.self_play()
             print("Training on gathered data...")
-            # Train the model on gathered data
-            self.model.train()
-            print("Training complete.")
+            self.train_model()
+
+        # Save the model after training
+        self.model.save("model.pth")
+
+    def load_model(self, path):
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.model.load(path, device=device)
 
     def train_model(self):
         """ Train the model on the accumulated data. """
@@ -36,9 +42,15 @@ class GameController:
             loss_policy = F.cross_entropy(policy_output, torch.tensor(target_policy).long().cuda())
             loss_value = F.mse_loss(value_output.squeeze(), torch.tensor([target_value], dtype=torch.float32).cuda())
 
-            loss = loss_policy + loss_value
+            # combined the loss and add the regularization term for the wightes
+            l2_reg = torch.tensor(0., requires_grad=True)
+            for param in self.model.parameters():
+                l2_reg += torch.norm(param)
+            loss = loss_policy + loss_value + 0.01 * l2_reg
             loss.backward()
             self.optimizer.step()
+
+        self.data = []
 
     def self_play(self):
         """ Simulate a game where the AI plays against itself. """
@@ -133,4 +145,6 @@ class GameController:
 # Example usage:
 if __name__ == "__main__":
     controller = GameController()
+    if os.path.exists("model.pth"):
+        controller.load_model("model.pth")
     controller.menu()

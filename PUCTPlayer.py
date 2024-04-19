@@ -42,6 +42,7 @@ class PUCTPlayer:
         while not curr_node.is_fully_expanded() or curr_node.children:
             if not curr_node.is_fully_expanded():
                 move = random.choice(curr_node.untried_moves)  # Select a move from untried moves
+                print(f"Trying move: {move} from state:\n{curr_node.game_state}")
                 curr_node.untried_moves.remove(move)  # Remove the selected move from untried moves
                 curr_node = curr_node.add_child(move)  # Expand this move into a new child node
 
