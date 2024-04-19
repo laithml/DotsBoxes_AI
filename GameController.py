@@ -23,13 +23,14 @@ class GameController:
                 self.self_play()
             print("Training on gathered data...")
             self.train_model()
-
-        # Save the model after training
-        self.model.save("model.pth")
+        self.model.save("model.pth", self.optimizer)
+        print("Training complete.")
 
     def load_model(self, path):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.model.load(path, device=device)
+        optimizer_state_dict = self.model.load(path, device)
+        self.optimizer.load_state_dict(optimizer_state_dict)
+        print("Optimizer state has been loaded.")
 
     def train_model(self):
         """ Train the model on the accumulated data. """
@@ -70,7 +71,6 @@ class GameController:
             player_color = "RED" if self.game.current_player == DotsBoxes.RED else "BLUE"
             print(f"{player_color}'s turn")
 
-
             # Get move from current player
             move_made = False
             while not move_made:
@@ -80,7 +80,7 @@ class GameController:
                     move_made = self.game.make_move(move[0], move[1], move[2])
                     self.game.print_board()
                 else:
-                    # puct_player1's turn
+                    # puct_player2's turn
                     move = puct_player2.choose_move(1000)
                     move_made = self.game.make_move(move[0], move[1], move[2])
                     self.game.print_board()
@@ -104,11 +104,9 @@ class GameController:
         # Final scores
         print(f"Final Scores - RED: {self.game.score[0]}, BLUE: {self.game.score[1]}")
 
-    # while not self.game.is_game_over():
-    #         move = self.ai.choose_move(100)
-    #         self.game.make_move(move[0], move[1], move[2])
-
     def play_game(self):
+        if os.path.exists("model.pth"):
+            self.load_model("model.pth")
         self.game.reset()
         puct_player = PUCTPlayer(self.game)
         print("Welcome to Dots and Boxes!")
@@ -133,7 +131,8 @@ class GameController:
                     print("MCTSPlayer end")
                 else:
                     try:
-                        orientation = input("Enter line orientation (h for horizontal(---), v for vertical(|)): ").lower()
+                        orientation = input(
+                            "Enter line orientation (h for horizontal(---), v for vertical(|)): ").lower()
                         if orientation not in ['h', 'v']:
                             raise ValueError("Invalid orientation")
                         if (orientation == 'h'):
@@ -173,7 +172,6 @@ class GameController:
         # Final scores
         print(f"Final Scores - RED: {self.game.score[0]}, BLUE: {self.game.score[1]}")
 
-
     def menu(self):
         """ Display menu options to the user. """
         option = 0
@@ -197,9 +195,6 @@ class GameController:
                 print("Please enter a valid number.")
 
 
-# Example usage:
 if __name__ == "__main__":
     controller = GameController()
-    if os.path.exists("model.pth"):
-        controller.load_model("model.pth")
     controller.menu()
