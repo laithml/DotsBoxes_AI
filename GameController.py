@@ -33,12 +33,17 @@ class GameController:
             for _ in range(iterations):
                 self.self_play()
             print("Training on gathered data...")
+
             self.train_model()
             self.model.save("model.pth", self.optimizer)
+
+            self.game.reset()
+
         print("Training complete.")
 
     def load_model(self, path):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        print('using', device)
         optimizer_state_dict = self.model.load(path, device)
         self.optimizer.load_state_dict(optimizer_state_dict)
         print("Optimizer state has been loaded.")
@@ -52,7 +57,10 @@ class GameController:
             if torch.cuda.is_available():
                 input_tensor = input_tensor.cuda()  # Move tensor to GPU
             policy_output, value_output = self.model(input_tensor)
-            loss_policy = F.cross_entropy(policy_output, torch.tensor(target_policy).long().cuda())
+            target_policy = [target_policy]
+            print(policy_output)
+            print(torch.tensor(target_policy).long().cuda())
+            loss_policy = F.cross_entropy(policy_output, torch.tensor(target_policy).float().cuda())
             loss_value = F.mse_loss(value_output.squeeze(), torch.tensor([target_value], dtype=torch.float32).cuda())
 
             # combined the loss and add the regularization term for the wightes
@@ -72,32 +80,30 @@ class GameController:
             self.load_model("model.pth")
 
         self.game.reset()
-        puct_player1 = PUCTPlayer(self.game)
+        puct_player1 = self.ai
         puct_player2 = PUCTPlayer(self.game)
 
         while not self.game.is_game_over():
             # Current player
-            player_color = "RED" if self.game.current_player == DotsBoxes.RED else "BLUE"
-            print(f"{player_color}'s turn - Scores RED: {self.game.score[0]}, BLUE: {self.game.score[1]}")
-
             if self.game.current_player == DotsBoxes.RED:
                 puct_player = puct_player1
+                print("RED")
             else:
                 puct_player = puct_player2
+                print("BLue")
 
             # AI chooses and makes a move
-            move = puct_player.choose_move(1000)
+            move = puct_player.choose_move(10)
             valid_move = self.game.make_move(move[0], move[1], move[2])
-            self.game.print_board()
 
-            if valid_move:
+            if valid_move and puct_player == puct_player1:
                 # Encode the move and the resulting game state
                 game_state_encoded = self.game.encode_state()
                 move_index = encode_move(move[0], move[1], move[2])
                 policy_output = [0] * 112  # Total possible moves
                 policy_output[move_index] = 1
                 # Append to data set (state, policy, reward)
-                self.data.append((game_state_encoded, policy_output, self.game.current_player))
+                self.data.append((game_state_encoded, policy_output, 0))
 
             # Update MCTS roots after the move
             puct_player.root = MCTSNode(self.game)
@@ -110,10 +116,19 @@ class GameController:
         # Game over, declare winner
         if outcome == DotsBoxes.RED:
             print("Game over! RED wins!")
+            for i in range(len(self.data)):
+                new_tuple = (self.data[i][0], self.data[i][1], 1)
+                self.data[i] = new_tuple
         elif outcome == DotsBoxes.BLUE:
             print("Game over! BLUE wins!")
+            for i in range(len(self.data)):
+                new_tuple = (self.data[i][0], self.data[i][1], 0)
+                self.data[i] = new_tuple
         else:
             print("Game over! It's a draw!")
+            for i in range(len(self.data)):
+                new_tuple = (self.data[i][0], self.data[i][1], 0.5)
+                self.data[i] = new_tuple
         # Final scores
         print(f"Final Scores - RED: {self.game.score[0]}, BLUE: {self.game.score[1]}")
 
@@ -121,7 +136,7 @@ class GameController:
         if os.path.exists("model.pth"):
             self.load_model("model.pth")
         self.game.reset()
-        puct_player = PUCTPlayer(self.game)
+        puct_player = self.ai
         print("Welcome to Dots and Boxes!")
         self.game.print_board()
         while not self.game.is_game_over():
@@ -194,18 +209,21 @@ class GameController:
             print("9. Exit")
             try:
                 option = int(input("Select an option: "))
-                if option == 1:
-                    iterations = int(input("Enter number of iterations per epoch: "))
-                    epochs = int(input("Enter number of epochs: "))
-                    self.train(iterations, epochs)
-                elif option == 2:
-                    self.play_game()
-                elif option == 9:
-                    print("Exiting...")
-                else:
-                    print("Invalid option, please choose again.")
             except ValueError:
                 print("Please enter a valid number.")
+            if option == 1:
+                try:
+                    iterations = int(input("Enter number of iterations per epoch: "))
+                    epochs = int(input("Enter number of epochs: "))
+                except ValueError:
+                    print("Please enter a valid number.")
+                self.train(iterations, epochs)
+            elif option == 2:
+                self.play_game()
+            elif option == 9:
+                print("Exiting...")
+            else:
+                print("Invalid option, please choose again.")
 
 
 if __name__ == "__main__":
