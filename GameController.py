@@ -50,27 +50,30 @@ class GameController:
 
     def train_model(self):
         """ Train the model on the accumulated data. """
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.model.train()
-        for game_state, target_policy, target_value in self.data:
+        for game_state, move_index, target_value in self.data:
             self.optimizer.zero_grad()
-            input_tensor = torch.tensor(game_state, dtype=torch.float32).unsqueeze(0)
-            if torch.cuda.is_available():
-                input_tensor = input_tensor.cuda()  # Move tensor to GPU
-            policy_output, value_output = self.model(input_tensor)
-            target_policy = [target_policy]
-            print(policy_output)
-            print(torch.tensor(target_policy).long().cuda())
-            loss_policy = F.cross_entropy(policy_output, torch.tensor(target_policy).float().cuda())
-            loss_value = F.mse_loss(value_output.squeeze(), torch.tensor([target_value], dtype=torch.float32).cuda())
+            input_tensor = torch.tensor(game_state, dtype=torch.float32).unsqueeze(0).to(device)
+            policy_logits, value_output = self.model(input_tensor)
 
-            # combined the loss and add the regularization term for the wightes
-            l2_reg = torch.tensor(0., requires_grad=True)
-            for param in self.model.parameters():
-                l2_reg += torch.norm(param)
-            loss = loss_policy + loss_value + 0.01 * l2_reg
+            target_tensor_policy = torch.tensor([move_index], dtype=torch.float32).to(device)
+            loss_policy = F.cross_entropy(policy_logits, target_tensor_policy)
+
+            if value_output.numel() == 1:
+                value_output_squeezed = value_output.view(1)
+            else:
+                value_output_squeezed = value_output.squeeze()
+
+            target_tensor_value = torch.tensor([target_value], dtype=torch.float32).to(device)
+            loss_value = F.mse_loss(value_output_squeezed, target_tensor_value)
+
+            # Combine losses and perform backpropagation
+            loss = loss_policy + loss_value
             loss.backward()
             self.optimizer.step()
 
+        # Clear data after training
         self.data = []
 
     def self_play(self):
@@ -80,8 +83,11 @@ class GameController:
             self.load_model("model.pth")
 
         self.game.reset()
+        self.ai.root = MCTSNode(self.game)  # Reset the MCTS tree with the initial game state
         puct_player1 = self.ai
+        puct_player1.model = self.ai.model
         puct_player2 = PUCTPlayer(self.game)
+        puct_player2.model = self.ai.model
 
         while not self.game.is_game_over():
             # Current player
@@ -93,10 +99,10 @@ class GameController:
                 print("BLue")
 
             # AI chooses and makes a move
-            move = puct_player.choose_move(10)
+            move = puct_player.choose_move(80)
             valid_move = self.game.make_move(move[0], move[1], move[2])
 
-            if valid_move and puct_player == puct_player1:
+            if valid_move and self.game.current_player == DotsBoxes.RED:
                 # Encode the move and the resulting game state
                 game_state_encoded = self.game.encode_state()
                 move_index = encode_move(move[0], move[1], move[2])
@@ -116,19 +122,16 @@ class GameController:
         # Game over, declare winner
         if outcome == DotsBoxes.RED:
             print("Game over! RED wins!")
-            for i in range(len(self.data)):
-                new_tuple = (self.data[i][0], self.data[i][1], 1)
-                self.data[i] = new_tuple
+            reward = 1  # Win
         elif outcome == DotsBoxes.BLUE:
             print("Game over! BLUE wins!")
-            for i in range(len(self.data)):
-                new_tuple = (self.data[i][0], self.data[i][1], 0)
-                self.data[i] = new_tuple
+            reward = 0  # Loss
         else:
             print("Game over! It's a draw!")
-            for i in range(len(self.data)):
-                new_tuple = (self.data[i][0], self.data[i][1], 0.5)
-                self.data[i] = new_tuple
+            reward = 0.5  # Draw
+
+        self.data = [(gs, policy, reward) for (gs, policy, _) in self.data]
+
         # Final scores
         print(f"Final Scores - RED: {self.game.score[0]}, BLUE: {self.game.score[1]}")
 

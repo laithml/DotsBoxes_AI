@@ -33,7 +33,8 @@ class PUCTPlayer:
     def choose_move(self, iterations):
         for _ in range(iterations):
             self.selection_back_propagation()
-            # self.print_tree()
+            # if self.root.game_state.current_player == DotsBoxes.RED:
+             # self.print_tree()
         return self.best_move()
 
     def selection_back_propagation(self):
@@ -44,7 +45,7 @@ class PUCTPlayer:
                 curr_node.untried_moves = DotsBoxes.legal_moves(curr_node.game_state)
 
                 move = random.choice(curr_node.untried_moves)  # Select a move from untried moves
-                    # print(f"Trying move: {move} from state:\n{curr_node.game_state}")
+                # print(f"Trying move: {move} from state:\n{curr_node.game_state}")
                 curr_node.untried_moves.remove(move)  # Remove the selected move from untried moves
                 curr_node = curr_node.add_child(move)  # Expand this move into a new child node
 
@@ -98,14 +99,16 @@ class PUCTPlayer:
             print("No valid move found.")
         return best_move
 
-    def print_tree(self, node=None, indent=""):
+    def print_tree(self, node=None, depth=0, prefix="Root"):
+        """ Print the tree in a structured way for easy visualization. """
         if node is None:
             node = self.root
             print("Root node (current player is {}):".format(
                 "RED" if node.game_state.current_player == DotsBoxes.RED else "BLUE"))
 
-        for child in node.children:
-            move_str = "Move: {}, N: {}, Q: {:.2f}".format(child.move, child.N, child.Q)
-            print(indent + move_str)
-            if child.children:
-                self.print_tree(child, indent + "    ")
+        # Print the current node details
+        print(f"{' ' * depth * 2}{prefix} - Move: {node.move if node.move else 'Start'}, N: {node.N}, Q: {node.Q:.2f}")
+
+        # Recursively print each child node
+        for i, child in enumerate(node.children, start=1):
+            self.print_tree(child, depth + 1, prefix=f"Child {i}")

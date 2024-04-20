@@ -21,9 +21,8 @@ class PolicyValueNetwork(nn.Module):
         x = self.flatten(x)
         x = F.relu(self.fc(x))
         policy_logits = self.policy_head(x)
-        policy_output = F.softmax(policy_logits, dim=1)
         value_output = torch.tanh(self.value_head(x))
-        return policy_output, value_output
+        return policy_logits, value_output
 
     def save(self, filename, optimizer):
         """ Saves the model state along with optimizer state. """
