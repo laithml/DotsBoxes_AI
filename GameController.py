@@ -87,7 +87,7 @@ class GameController:
         puct_player1 = self.ai
         puct_player1.model = self.ai.model
         puct_player2 = PUCTPlayer(self.game)
-        puct_player2.model = self.ai.model
+        # puct_player2.model = self.ai.model
 
         while not self.game.is_game_over():
             # Current player
@@ -139,7 +139,10 @@ class GameController:
         if os.path.exists("model.pth"):
             self.load_model("model.pth")
         self.game.reset()
+
+        self.ai.root = MCTSNode(self.game)
         puct_player = self.ai
+
         print("Welcome to Dots and Boxes!")
         self.game.print_board()
         while not self.game.is_game_over():
