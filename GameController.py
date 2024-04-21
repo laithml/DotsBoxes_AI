@@ -98,18 +98,22 @@ class GameController:
                 puct_player = puct_player2
                 print("BLue")
 
+            # Encode the move and the resulting game state
+            if self.game.current_player == DotsBoxes.RED:
+                game_state_encoded = self.game.encode_state()
+            move = puct_player.choose_move(200)
             # AI chooses and makes a move
-            move = puct_player.choose_move(80)
-            valid_move = self.game.make_move(move[0], move[1], move[2])
+            valid_move, reward = self.game.make_move(move[0], move[1], move[2])
 
             if valid_move and self.game.current_player == DotsBoxes.RED:
-                # Encode the move and the resulting game state
-                game_state_encoded = self.game.encode_state()
+                self.data[-1] = (self.data[-1][0], self.data[-1][1], self.data[-1][2]-reward)
+
+            if valid_move and self.game.current_player == DotsBoxes.BLUE:
                 move_index = encode_move(move[0], move[1], move[2])
                 policy_output = [0] * 112  # Total possible moves
                 policy_output[move_index] = 1
                 # Append to data set (state, policy, reward)
-                self.data.append((game_state_encoded, policy_output, 0))
+                self.data.append((game_state_encoded, policy_output, reward))
 
             # Update MCTS roots after the move
             puct_player.root = MCTSNode(self.game)
@@ -122,13 +126,10 @@ class GameController:
         # Game over, declare winner
         if outcome == DotsBoxes.RED:
             print("Game over! RED wins!")
-            reward = 1  # Win
         elif outcome == DotsBoxes.BLUE:
             print("Game over! BLUE wins!")
-            reward = 0  # Loss
         else:
             print("Game over! It's a draw!")
-            reward = 0.5  # Draw
 
         self.data = [(gs, policy, reward) for (gs, policy, _) in self.data]
 
@@ -159,9 +160,9 @@ class GameController:
                 if self.game.current_player == DotsBoxes.RED:
                     # MCTSPlayer's turn
                     print("MCTSPlayer (RED) is thinking...")
-                    move = puct_player.choose_move(1000)
+                    move = puct_player.choose_move(200)
                     print(f"MCTSPlayer chooses column {move}")
-                    move_made = self.game.make_move(move[0], move[1], move[2])
+                    move_made, _ = self.game.make_move(move[0], move[1], move[2])
                     print("MCTSPlayer end")
                 else:
                     try:
@@ -181,7 +182,7 @@ class GameController:
                             raise ValueError("Invalid row index for horizontal line")
                         if orientation == 'v' and i == 7:
                             raise ValueError("Invalid column index for vertical line")
-                        move_made = self.game.make_move(orientation, i, j)
+                        move_made, _ = self.game.make_move(orientation, i, j)
                         if not move_made:
                             print("Illegal move or line already occupied. Try again.")
                     except ValueError as e:

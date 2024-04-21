@@ -55,6 +55,7 @@ class PUCTPlayer:
                 policy_output, value = self.model.forward(game_state_encoded)
                 policy_output = policy_output.detach().cpu().numpy().flatten()
 
+
                 curr_node.Q = value.item()
                 curr_node.N = 1
 

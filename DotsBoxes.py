@@ -47,7 +47,7 @@ class DotsBoxes:
 
         if not valid:
             print(f"Attempted illegal or repeated move: {orientation} at ({i}, {j})")
-            return False
+            return False, 0
 
         # Assuming update_boxes_after_move returns number of boxes completed
         boxes_completed = self.update_boxes_after_move(orientation, i, j)
@@ -61,7 +61,7 @@ class DotsBoxes:
             self.current_player = self.other_player(self.current_player)
         self.moves += 1
         self.history.append((orientation, i, j))
-        return True
+        return True, boxes_completed
 
     def update_boxes_after_move(self, orientation, i, j):
         completed_boxes = 0
@@ -239,7 +239,7 @@ def play_game():
                 if orientation == 'v' and i == 7:
                     raise ValueError("Invalid column index for vertical line")
 
-                move_made = game.make_move(orientation, i, j)
+                move_made, _ = game.make_move(orientation, i, j)
                 if not move_made:
                     print("Illegal move or line already occupied. Try again.")
             except ValueError as e:
