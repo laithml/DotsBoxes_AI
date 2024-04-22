@@ -87,21 +87,20 @@ class GameController:
         puct_player1 = self.ai
         puct_player1.model = self.ai.model
         puct_player2 = PUCTPlayer(self.game)
-        # puct_player2.model = self.ai.model
 
         while not self.game.is_game_over():
             # Current player
             if self.game.current_player == DotsBoxes.RED:
                 puct_player = puct_player1
-                print("RED")
+                # print("RED")
             else:
                 puct_player = puct_player2
-                print("BLue")
+                # print("BLue")
 
             # Encode the move and the resulting game state
             if self.game.current_player == DotsBoxes.RED:
                 game_state_encoded = self.game.encode_state()
-            move = puct_player.choose_move(200)
+            move = puct_player.choose_move(1000)
             # AI chooses and makes a move
             valid_move, reward = self.game.make_move(move[0], move[1], move[2])
 
@@ -160,7 +159,7 @@ class GameController:
                 if self.game.current_player == DotsBoxes.RED:
                     # MCTSPlayer's turn
                     print("MCTSPlayer (RED) is thinking...")
-                    move = puct_player.choose_move(200)
+                    move = puct_player.choose_move(1000)
                     print(f"MCTSPlayer chooses column {move}")
                     move_made, _ = self.game.make_move(move[0], move[1], move[2])
                     print("MCTSPlayer end")

@@ -92,10 +92,10 @@ class PUCTPlayer:
                 best_N = child.N
                 best_move = child.move
 
-        if best_move is not None:
-            print("Best move:", best_move)
-        else:
-            print("No valid move found.")
+        # if best_move is not None:
+        #     print("Best move:", best_move)
+        # else:
+        #     print("No valid move found.")
         return best_move
 
     def print_tree(self, node=None, depth=0, prefix="Root"):
