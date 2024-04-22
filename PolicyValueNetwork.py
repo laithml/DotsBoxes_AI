@@ -14,6 +14,16 @@ class PolicyValueNetwork(nn.Module):
         self.policy_head = nn.Linear(256, 8 * 7 + 7 * 8)  # Total number of possible moves
         self.value_head = nn.Linear(256, 1)
 
+    # def forward(self, x):
+    #     x = F.relu(self.conv1(x))
+    #     x = F.relu(self.conv2(x))
+    #     x = F.relu(self.conv3(x))
+    #     x = self.flatten(x)
+    #     x = F.relu(self.fc(x))
+    #     policy_logits = self.policy_head(x)
+    #     value_output = torch.tanh(self.value_head(x))
+    #     return policy_logits, value_output
+
     def forward(self, x):
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
@@ -22,7 +32,9 @@ class PolicyValueNetwork(nn.Module):
         x = F.relu(self.fc(x))
         policy_logits = self.policy_head(x)
         value_output = torch.tanh(self.value_head(x))
-        return policy_logits, value_output
+        policy_probs = F.softmax(policy_logits, dim=1)  # Softmax applied here for illustrative purposes
+
+        return policy_probs, value_output
 
     def save(self, filename, optimizer):
         """ Saves the model state along with optimizer state. """

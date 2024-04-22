@@ -6,6 +6,7 @@ from PUCTPlayer import PUCTPlayer
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
+import torch.nn as nn
 
 
 def encode_move(orientation, row, column):
@@ -25,6 +26,9 @@ class GameController:
         self.ai = PUCTPlayer(self.game)
         self.model = self.ai.model
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)  # Example optimizer
+        self.loss_fn = nn.MSELoss()  # For value loss
+        self.policy_loss_fn = nn.CrossEntropyLoss()  # For policy loss
+
         self.data = []  # Store training data
 
     def train(self, iterations, epochs):
@@ -32,11 +36,11 @@ class GameController:
             print(f"Epoch {epoch + 1}/{epochs}")
             for _ in range(iterations):
                 self.self_play()
+
             print("Training on gathered data...")
 
             self.train_model()
             self.model.save("model.pth", self.optimizer)
-
             self.game.reset()
 
         print("Training complete.")
@@ -48,30 +52,53 @@ class GameController:
         self.optimizer.load_state_dict(optimizer_state_dict)
         print("Optimizer state has been loaded.")
 
-    def train_model(self):
-        """ Train the model on the accumulated data. """
+    def train_step(self, game_state, true_move, true_value):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.model.train()
+        self.optimizer.zero_grad()
+
+        # Convert game state to tensor
+        game_state_tensor = torch.tensor(game_state, dtype=torch.float32).unsqueeze(0).to(device)
+        true_move_tensor = torch.tensor([true_move], dtype=torch.float32).to(device)
+        true_value_tensor = torch.tensor([true_value], dtype=torch.float32).to(device)
+
+        # Forward pass
+        policy_logits, value = self.model(game_state_tensor)
+
+        value_loss = self.loss_fn(value.squeeze(-1), true_value_tensor)
+        policy_loss = self.policy_loss_fn(policy_logits, true_move_tensor)  # Direct use
+
+        total_loss = value_loss + policy_loss
+        total_loss.backward()
+        self.optimizer.step()
+        return total_loss.item()
+
+    def train_model(self):
+        """ Train the model on the accumulated data. """
+        # device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        # self.model.train()
         for game_state, move_index, target_value in self.data:
-            self.optimizer.zero_grad()
-            input_tensor = torch.tensor(game_state, dtype=torch.float32).unsqueeze(0).to(device)
-            policy_logits, value_output = self.model(input_tensor)
+            self.train_step(game_state, move_index, target_value)
 
-            target_tensor_policy = torch.tensor([move_index], dtype=torch.float32).to(device)
-            loss_policy = F.cross_entropy(policy_logits, target_tensor_policy)
+            # self.optimizer.zero_grad()
+            # input_tensor = torch.tensor(game_state, dtype=torch.float32).unsqueeze(0).to(device)
+            # policy_logits, value_output = self.model(input_tensor)
 
-            if value_output.numel() == 1:
-                value_output_squeezed = value_output.view(1)
-            else:
-                value_output_squeezed = value_output.squeeze()
+            # target_tensor_policy = torch.tensor([move_index], dtype=torch.float32).to(device)
+            # loss_policy = F.cross_entropy(policy_logits, target_tensor_policy)
 
-            target_tensor_value = torch.tensor([target_value], dtype=torch.float32).to(device)
-            loss_value = F.mse_loss(value_output_squeezed, target_tensor_value)
+            # if value_output.numel() == 1:
+            #     value_output_squeezed = value_output.view(1)
+            # else:
+            #     value_output_squeezed = value_output.squeeze()
 
-            # Combine losses and perform backpropagation
-            loss = loss_policy + loss_value
-            loss.backward()
-            self.optimizer.step()
+            # target_tensor_value = torch.tensor([target_value], dtype=torch.float32).to(device)
+            # loss_value = F.mse_loss(value_output_squeezed, target_tensor_value)
+
+            # # Combine losses and perform backpropagation
+            # loss = loss_policy + loss_value
+            # loss.backward()
+            # self.optimizer.step()
 
         # Clear data after training
         self.data = []
@@ -79,14 +106,15 @@ class GameController:
     def self_play(self):
         """ Simulate a game where the AI plays against itself and collect training data. """
         print("Starting a self-play session...")
-        if os.path.exists("model.pth"):
-            self.load_model("model.pth")
 
         self.game.reset()
-        self.ai.root = MCTSNode(self.game)  # Reset the MCTS tree with the initial game state
+        self.ai = PUCTPlayer(self.game)
         puct_player1 = self.ai
         puct_player1.model = self.ai.model
         puct_player2 = PUCTPlayer(self.game)
+
+        if os.path.exists("model.pth"):
+            self.load_model("model.pth")
 
         while not self.game.is_game_over():
             # Current player
@@ -97,17 +125,16 @@ class GameController:
                 puct_player = puct_player2
                 # print("BLue")
 
-            # Encode the move and the resulting game state
-            if self.game.current_player == DotsBoxes.RED:
-                game_state_encoded = self.game.encode_state()
-            move = puct_player.choose_move(1000)
+            move = puct_player.choose_move(10)
             # AI chooses and makes a move
             valid_move, reward = self.game.make_move(move[0], move[1], move[2])
 
-            if valid_move and self.game.current_player == DotsBoxes.RED:
-                self.data[-1] = (self.data[-1][0], self.data[-1][1], self.data[-1][2]-reward)
+            if valid_move and self.game.history[-1][0] == DotsBoxes.BLUE:
+                self.data[-1] = (self.data[-1][0], self.data[-1][1], self.data[-1][2] - reward)
 
-            if valid_move and self.game.current_player == DotsBoxes.BLUE:
+            elif valid_move and self.game.history[-1][0] == DotsBoxes.RED:
+                # Encode the move and the resulting game state
+                game_state_encoded = self.game.encode_state()
                 move_index = encode_move(move[0], move[1], move[2])
                 policy_output = [0] * 112  # Total possible moves
                 policy_output[move_index] = 1
@@ -115,8 +142,10 @@ class GameController:
                 self.data.append((game_state_encoded, policy_output, reward))
 
             # Update MCTS roots after the move
-            puct_player.root = MCTSNode(self.game)
+            puct_player1.root = MCTSNode(self.game)
+            puct_player2.root = MCTSNode(self.game)
 
+            # self.game.print_board()
             # Check game outcome
             outcome = self.game.outcome()
             if outcome != DotsBoxes.ONGOING:
@@ -136,12 +165,13 @@ class GameController:
         print(f"Final Scores - RED: {self.game.score[0]}, BLUE: {self.game.score[1]}")
 
     def play_game(self):
+        self.game.reset()
+        self.ai = PUCTPlayer(self.game)
+        puct_player = self.ai
+        puct_player.model = self.ai.model
+
         if os.path.exists("model.pth"):
             self.load_model("model.pth")
-        self.game.reset()
-
-        self.ai.root = MCTSNode(self.game)
-        puct_player = self.ai
 
         print("Welcome to Dots and Boxes!")
         self.game.print_board()
@@ -159,7 +189,7 @@ class GameController:
                 if self.game.current_player == DotsBoxes.RED:
                     # MCTSPlayer's turn
                     print("MCTSPlayer (RED) is thinking...")
-                    move = puct_player.choose_move(1000)
+                    move = puct_player.choose_move(2000)
                     print(f"MCTSPlayer chooses column {move}")
                     move_made, _ = self.game.make_move(move[0], move[1], move[2])
                     print("MCTSPlayer end")

@@ -20,18 +20,18 @@ class DotsBoxes:
 
     def legal_moves(self):
         # Returns a list of legal moves as tuples indicating the line position and orientation (h or v)
-        moves = []
+        moves_arr = []
         for i in range(8):
             for j in range(7):
                 if not self.horizontal_lines[i][j]:
-                    temp = ['h', i, j]
-                    moves.append(temp)
+                    temp = ['h', i, j, 1]
+                    moves_arr.append(temp)
         for i in range(7):
             for j in range(8):
                 if not self.vertical_lines[i][j]:
-                    temp = ['v', i, j]
-                    moves.append(temp)
-        return moves
+                    temp = ['v', i, j, 1]
+                    moves_arr.append(temp)
+        return moves_arr
 
 
     def make_move(self, orientation, i, j):
@@ -46,11 +46,13 @@ class DotsBoxes:
                 valid = True
 
         if not valid:
-            print(f"Attempted illegal or repeated move: {orientation} at ({i}, {j})")
+            print(f"Attempted illegal or repeated move : {orientation} at ({i}, {j})")
             return False, 0
 
         # Assuming update_boxes_after_move returns number of boxes completed
         boxes_completed = self.update_boxes_after_move(orientation, i, j)
+        self.history.append((self.current_player, orientation, i, j))
+
         if boxes_completed > 0:
             if self.current_player == self.RED:
                 self.score[0] += boxes_completed
@@ -60,7 +62,6 @@ class DotsBoxes:
         else:
             self.current_player = self.other_player(self.current_player)
         self.moves += 1
-        self.history.append((orientation, i, j))
         return True, boxes_completed
 
     def update_boxes_after_move(self, orientation, i, j):

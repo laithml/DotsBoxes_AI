@@ -34,7 +34,7 @@ class PUCTPlayer:
         for _ in range(iterations):
             self.selection_back_propagation()
             # if self.root.game_state.current_player == DotsBoxes.RED:
-             # self.print_tree()
+            # self.print_tree()
         return self.best_move()
 
     def selection_back_propagation(self):
@@ -44,7 +44,6 @@ class PUCTPlayer:
 
                 move = random.choice(curr_node.untried_moves)  # Select a move from untried moves
                 # print(f"Trying move: {move} from state:\n{curr_node.game_state}")
-                curr_node.untried_moves.remove(move)  # Remove the selected move from untried moves
                 curr_node = curr_node.add_child(move)  # Expand this move into a new child node
 
                 # Get the encoded state and use the model to predict value and policy
@@ -55,19 +54,19 @@ class PUCTPlayer:
                 policy_output, value = self.model.forward(game_state_encoded)
                 policy_output = policy_output.detach().cpu().numpy().flatten()
 
-
                 curr_node.Q = value.item()
                 curr_node.N = 1
 
                 # Decode all moves and assign probabilities
                 decoded_moves = [(decode_move(i), policy_output[i]) for i in range(len(policy_output))]
-                move_probs = {move: prob for move, prob in decoded_moves if move in curr_node.untried_moves}
 
-                # Update untried moves with probabilities
-                for move in curr_node.untried_moves:
-                    tuple_move = tuple(move)
-                    if tuple_move in move_probs:
-                        move.probability = move_probs[tuple_move]
+                for i, move in enumerate(curr_node.untried_moves):
+                    tuple_move = (move[0], move[1], move[2])
+                    if tuple_move in [x[0] for x in decoded_moves]:
+                        # Find the corresponding probability
+                        decoded_move = next(x for x in decoded_moves if x[0] == tuple_move)
+                        # Update the untried_moves list
+                        curr_node.untried_moves[i] = (tuple_move[0], tuple_move[1], tuple_move[2], decoded_move[1])
 
                 break
             else:
