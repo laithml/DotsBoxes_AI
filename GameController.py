@@ -125,6 +125,10 @@ class GameController:
                 puct_player = puct_player2
                 # print("BLue")
 
+            if self.game.current_player == DotsBoxes.RED:
+                # Encode the move and the resulting game state
+                game_state_encoded = self.game.encode_state()
+
             move = puct_player.choose_move(10)
             # AI chooses and makes a move
             valid_move, reward = self.game.make_move(move[0], move[1], move[2])
@@ -133,8 +137,6 @@ class GameController:
                 self.data[-1] = (self.data[-1][0], self.data[-1][1], self.data[-1][2] - reward)
 
             elif valid_move and self.game.history[-1][0] == DotsBoxes.RED:
-                # Encode the move and the resulting game state
-                game_state_encoded = self.game.encode_state()
                 move_index = encode_move(move[0], move[1], move[2])
                 policy_output = [0] * 112  # Total possible moves
                 policy_output[move_index] = 1
