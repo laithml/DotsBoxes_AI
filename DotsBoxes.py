@@ -166,14 +166,14 @@ class DotsBoxes:
     def print_board(self):
         # Column headers
         print("  " + "   ".join(str(i) for i in range(8)) + " ")
-        print("  _" + ('_ _ ' * 7))
+        print("  = " + ('= = ' * 7))
 
         for i in range(7):
             # Print horizontal lines and dots with row indices on the left
             horizontal_line = f"{i} ."
             for j in range(7):
                 if self.horizontal_lines[i][j]:
-                    horizontal_line += '---.'
+                    horizontal_line += '___.'
                 else:
                     horizontal_line += '   .'
             print(horizontal_line)
@@ -200,11 +200,11 @@ class DotsBoxes:
         bottom_line = f"7 ."
         for j in range(7):
             if self.horizontal_lines[7][j]:
-                bottom_line += '---.'
+                bottom_line += '___.'
             else:
                 bottom_line += '   .'
         print(bottom_line)
-        print("  _" + ('_ _ ' * 7))
+        print("  = " + ('= = ' * 7))
 
 
 def play_game():

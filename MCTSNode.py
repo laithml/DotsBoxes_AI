@@ -29,7 +29,7 @@ class MCTSNode:
             self.untried_moves.remove(move)
 
         child = MCTSNode(curr_state, self, [move[0], move[1], move[2]])
-        child.P=move[3]
+        child.P = move[3]
         self.children.append(child)
         return child
 
@@ -44,7 +44,7 @@ class MCTSNode:
         best_child = None
 
         for child in self.children:
-            exploration_term = c_param * child.P * np.sqrt(self.N) / (1 + child.N)
+            exploration_term = c_param * child.P * np.sqrt(self.N) / child.N
             puct_score = child.Q + exploration_term
             if puct_score > best_value:
                 best_child = child

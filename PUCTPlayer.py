@@ -33,8 +33,6 @@ class PUCTPlayer:
     def choose_move(self, iterations):
         for _ in range(iterations):
             self.selection_back_propagation()
-            # if self.root.game_state.current_player == DotsBoxes.RED:
-            # self.print_tree()
         return self.best_move()
 
     def selection_back_propagation(self):
@@ -43,7 +41,6 @@ class PUCTPlayer:
             if not curr_node.is_fully_expanded():
 
                 move = random.choice(curr_node.untried_moves)  # Select a move from untried moves
-                # print(f"Trying move: {move} from state:\n{curr_node.game_state}")
                 curr_node = curr_node.add_child(move)  # Expand this move into a new child node
 
                 # Get the encoded state and use the model to predict value and policy
@@ -76,7 +73,7 @@ class PUCTPlayer:
         while curr_node.parent is not None:
             par = curr_node.parent
             par.N += 1
-            par.Q += (1 / par.N) * (par.Q - curr_node.Q)
+            par.Q += (1 / par.N) * (curr_node.Q - par.Q)
             curr_node = curr_node.parent
 
     def best_move(self):
