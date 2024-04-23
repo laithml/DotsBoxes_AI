@@ -45,12 +45,25 @@ class GameController:
 
         print("Training complete.")
 
+    # def load_model(self, path):
+    #     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    #     print('using', device)
+    #     optimizer_state_dict = self.model.load(path, device)
+    #     self.optimizer.load_state_dict(optimizer_state_dict)
+    #     print("Optimizer state has been loaded.")
+
     def load_model(self, path):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        print('using', device)
-        optimizer_state_dict = self.model.load(path, device)
-        self.optimizer.load_state_dict(optimizer_state_dict)
-        print("Optimizer state has been loaded.")
+        print('Using', device)
+
+        # Load the checkpoint that includes both the model's and optimizer's state dictionaries
+        checkpoint = torch.load(path, map_location=device)
+
+        # Update the model and optimizer with the loaded state dictionaries
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        print("Model and optimizer states have been loaded.")
+
 
     def train_step(self, game_state, true_move, true_value):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -129,7 +142,11 @@ class GameController:
                 # Encode the move and the resulting game state
                 game_state_encoded = self.game.encode_state()
 
-            move = puct_player.choose_move(2000)
+            if self.game.current_player == DotsBoxes.BLUE:
+                move = puct_player.choose_move(10)
+            else:
+                move = puct_player.choose_move(2000)
+
             # AI chooses and makes a move
             valid_move, reward = self.game.make_move(move[0], move[1], move[2])
 

@@ -44,9 +44,9 @@ class PolicyValueNetwork(nn.Module):
         }, filename)
         print(f"Model and optimizer states have been saved to {filename}")
 
-    def load(self, filename, device):
-        """ Loads the model and optimizer states. """
-        checkpoint = torch.load(filename, map_location=device)
-        self.load_state_dict(checkpoint['model_state_dict'])
-        print("Model weights have been loaded from", filename)
-        return checkpoint['optimizer_state_dict']
+    # def load(self, filename, device):
+    #     """ Loads the model and optimizer states. """
+    #     checkpoint = torch.load(filename, map_location=device)
+    #     self.load_state_dict(checkpoint['model_state_dict'])
+    #     print("Model weights have been loaded from", filename)
+    #     return checkpoint['optimizer_state_dict']
