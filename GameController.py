@@ -129,7 +129,7 @@ class GameController:
                 # Encode the move and the resulting game state
                 game_state_encoded = self.game.encode_state()
 
-            move = puct_player.choose_move(10)
+            move = puct_player.choose_move(2000)
             # AI chooses and makes a move
             valid_move, reward = self.game.make_move(move[0], move[1], move[2])
 
@@ -147,7 +147,7 @@ class GameController:
             puct_player1.root = MCTSNode(self.game)
             puct_player2.root = MCTSNode(self.game)
 
-            # self.game.print_board()
+            self.game.print_board()
             # Check game outcome
             outcome = self.game.outcome()
             if outcome != DotsBoxes.ONGOING:

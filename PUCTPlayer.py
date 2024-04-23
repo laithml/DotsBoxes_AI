@@ -11,13 +11,13 @@ def decode_move(index):
     total_horizontal_moves = 8 * 7
     if index < total_horizontal_moves:
         orientation = 'h'
-        row = index // 8
-        column = index % 8
+        row = index // 7
+        column = index % 7
     else:
         orientation = 'v'
         index -= total_horizontal_moves
-        row = index // (8 - 1)
-        column = index % (8 - 1)
+        row = index // 8
+        column = index % 8
 
     return orientation, row, column
 
