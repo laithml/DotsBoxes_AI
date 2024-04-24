@@ -32,7 +32,7 @@ class PolicyValueNetwork(nn.Module):
         x = F.relu(self.fc(x))
         policy_logits = self.policy_head(x)
         value_output = torch.tanh(self.value_head(x))
-        policy_probs = F.softmax(policy_logits, dim=1)  # Softmax applied here for illustrative purposes
+        policy_probs = F.softmax(policy_logits, dim=1)
 
         return policy_probs, value_output
 
@@ -43,10 +43,3 @@ class PolicyValueNetwork(nn.Module):
             'optimizer_state_dict': optimizer.state_dict(),
         }, filename)
         print(f"Model and optimizer states have been saved to {filename}")
-
-    # def load(self, filename, device):
-    #     """ Loads the model and optimizer states. """
-    #     checkpoint = torch.load(filename, map_location=device)
-    #     self.load_state_dict(checkpoint['model_state_dict'])
-    #     print("Model weights have been loaded from", filename)
-    #     return checkpoint['optimizer_state_dict']

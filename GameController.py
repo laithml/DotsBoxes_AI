@@ -45,12 +45,6 @@ class GameController:
 
         print("Training complete.")
 
-    # def load_model(self, path):
-    #     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    #     print('using', device)
-    #     optimizer_state_dict = self.model.load(path, device)
-    #     self.optimizer.load_state_dict(optimizer_state_dict)
-    #     print("Optimizer state has been loaded.")
 
     def load_model(self, path):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -65,53 +59,28 @@ class GameController:
         print("Model and optimizer states have been loaded.")
 
 
-    def train_step(self, game_state, true_move, true_value):
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.model.train()
-        self.optimizer.zero_grad()
-
-        # Convert game state to tensor
-        game_state_tensor = torch.tensor(game_state, dtype=torch.float32).unsqueeze(0).to(device)
-        true_move_tensor = torch.tensor([true_move], dtype=torch.float32).to(device)
-        true_value_tensor = torch.tensor([true_value], dtype=torch.float32).to(device)
-
-        # Forward pass
-        policy_logits, value = self.model(game_state_tensor)
-
-        value_loss = self.loss_fn(value.squeeze(-1), true_value_tensor)
-        policy_loss = self.policy_loss_fn(policy_logits, true_move_tensor)  # Direct use
-
-        total_loss = value_loss + policy_loss
-        total_loss.backward()
-        self.optimizer.step()
-        return total_loss.item()
 
     def train_model(self):
         """ Train the model on the accumulated data. """
-        # device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        # self.model.train()
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.model.train()
         for game_state, move_index, target_value in self.data:
-            self.train_step(game_state, move_index, target_value)
+            self.optimizer.zero_grad()
 
-            # self.optimizer.zero_grad()
-            # input_tensor = torch.tensor(game_state, dtype=torch.float32).unsqueeze(0).to(device)
-            # policy_logits, value_output = self.model(input_tensor)
+            # Convert game state to tensor
+            game_state_tensor = torch.tensor(game_state, dtype=torch.float32).unsqueeze(0).to(device)
+            true_move_tensor = torch.tensor([move_index], dtype=torch.float32).to(device)
+            true_value_tensor = torch.tensor([move_index], dtype=torch.float32).to(device)
 
-            # target_tensor_policy = torch.tensor([move_index], dtype=torch.float32).to(device)
-            # loss_policy = F.cross_entropy(policy_logits, target_tensor_policy)
+            # Forward pass
+            policy_logits, value = self.model(game_state_tensor)
 
-            # if value_output.numel() == 1:
-            #     value_output_squeezed = value_output.view(1)
-            # else:
-            #     value_output_squeezed = value_output.squeeze()
+            value_loss = self.loss_fn(value.squeeze(-1), true_value_tensor)
+            policy_loss = self.policy_loss_fn(policy_logits, true_move_tensor)
 
-            # target_tensor_value = torch.tensor([target_value], dtype=torch.float32).to(device)
-            # loss_value = F.mse_loss(value_output_squeezed, target_tensor_value)
-
-            # # Combine losses and perform backpropagation
-            # loss = loss_policy + loss_value
-            # loss.backward()
-            # self.optimizer.step()
+            total_loss = value_loss + policy_loss
+            total_loss.backward()
+            self.optimizer.step()
 
         # Clear data after training
         self.data = []
@@ -177,8 +146,6 @@ class GameController:
             print("Game over! BLUE wins!")
         else:
             print("Game over! It's a draw!")
-
-        self.data = [(gs, policy, reward) for (gs, policy, _) in self.data]
 
         # Final scores
         print(f"Final Scores - RED: {self.game.score[0]}, BLUE: {self.game.score[1]}")

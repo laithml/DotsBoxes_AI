@@ -29,7 +29,7 @@ class MCTSNode:
             self.untried_moves.remove(move)
 
         child = MCTSNode(curr_state, self, [move[0], move[1], move[2]])
-        child.P = move[3]
+        child.P = move[3]  # its always 1 !!
         self.children.append(child)
         return child
 
