@@ -45,7 +45,6 @@ class GameController:
 
         print("Training complete.")
 
-
     def load_model(self, path):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('Using', device)
@@ -58,8 +57,6 @@ class GameController:
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         print("Model and optimizer states have been loaded.")
 
-
-
     def train_model(self):
         """ Train the model on the accumulated data. """
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -70,7 +67,7 @@ class GameController:
             # Convert game state to tensor
             game_state_tensor = torch.tensor(game_state, dtype=torch.float32).unsqueeze(0).to(device)
             true_move_tensor = torch.tensor([move_index], dtype=torch.float32).to(device)
-            true_value_tensor = torch.tensor([move_index], dtype=torch.float32).to(device)
+            true_value_tensor = torch.tensor([target_value], dtype=torch.float32).to(device)
 
             # Forward pass
             policy_logits, value = self.model(game_state_tensor)
