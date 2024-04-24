@@ -29,7 +29,8 @@ class GameController:
         self.loss_fn = nn.MSELoss()  # For value loss
         self.policy_loss_fn = nn.CrossEntropyLoss()  # For policy loss
 
-        self.data = []  # Store training data
+        self.data1 = []  # Store training data
+        self.data2 = []  # Store training data
 
     def train(self, iterations, epochs):
         for epoch in range(epochs):
@@ -61,7 +62,8 @@ class GameController:
         """ Train the model on the accumulated data. """
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.model.train()
-        for game_state, move_index, target_value in self.data:
+        merge_data = self.data1 + self.data2
+        for game_state, move_index, target_value in merge_data:
             self.optimizer.zero_grad()
 
             # Convert game state to tensor
@@ -80,7 +82,8 @@ class GameController:
             self.optimizer.step()
 
         # Clear data after training
-        self.data = []
+        self.data1 = []
+        self.data2 = []
 
     def self_play(self):
         """ Simulate a game where the AI plays against itself and collect training data. """
@@ -104,27 +107,29 @@ class GameController:
                 puct_player = puct_player2
                 # print("BLue")
 
-            if self.game.current_player == DotsBoxes.RED:
-                # Encode the move and the resulting game state
-                game_state_encoded = self.game.encode_state()
+            # Encode the move and the resulting game state
+            game_state_encoded = self.game.encode_state()
 
             if self.game.current_player == DotsBoxes.BLUE:
                 move = puct_player.choose_move(10)
             else:
-                move = puct_player.choose_move(2000)
+                move = puct_player.choose_move(1000)
 
             # AI chooses and makes a move
             valid_move, reward = self.game.make_move(move[0], move[1], move[2])
+            move_index = encode_move(move[0], move[1], move[2])
+            policy_output = [0] * 112  # Total possible moves
+            policy_output[move_index] = 1
 
-            if valid_move and self.game.history[-1][0] == DotsBoxes.BLUE:
-                self.data[-1] = (self.data[-1][0], self.data[-1][1], self.data[-1][2] - reward)
+            if valid_move and self.game.history[-1][0] == DotsBoxes.RED:
+                self.data1.append((game_state_encoded, policy_output, (reward-23.5) / 25.0))
+                if self.game.moves > 1:
+                    self.data2[-1] = (self.data2[-1][0], self.data2[-1][1], self.data2[-1][2] - (reward / 25.0))
 
-            elif valid_move and self.game.history[-1][0] == DotsBoxes.RED:
-                move_index = encode_move(move[0], move[1], move[2])
-                policy_output = [0] * 112  # Total possible moves
-                policy_output[move_index] = 1
-                # Append to data set (state, policy, reward)
-                self.data.append((game_state_encoded, policy_output, reward))
+            elif valid_move and self.game.history[-1][0] == DotsBoxes.BLUE:
+                self.data2.append((game_state_encoded, policy_output, (reward-23.5) / 25.0))
+                if self.game.moves > 1:
+                    self.data1[-1] = (self.data1[-1][0], self.data1[-1][1], self.data1[-1][2] - (reward / 25.0))
 
             # Update MCTS roots after the move
             puct_player1.root = MCTSNode(self.game)
@@ -172,7 +177,7 @@ class GameController:
                 if self.game.current_player == DotsBoxes.RED:
                     # MCTSPlayer's turn
                     print("MCTSPlayer (RED) is thinking...")
-                    move = puct_player.choose_move(2000)
+                    move = puct_player.choose_move(10)
                     print(f"MCTSPlayer chooses column {move}")
                     move_made, _ = self.game.make_move(move[0], move[1], move[2])
                     print("MCTSPlayer end")

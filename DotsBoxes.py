@@ -33,7 +33,6 @@ class DotsBoxes:
                     moves_arr.append(temp)
         return moves_arr
 
-
     def make_move(self, orientation, i, j):
         valid = False
         if orientation == 'h' and i < 8 and j < 7:
@@ -139,11 +138,8 @@ class DotsBoxes:
         horizontal_edges_padded = np.zeros((8, 8))
         horizontal_edges_padded[:8, :7] = horizontal_edges
 
-        # Create a channel for current player (1 if RED's turn, -1 if BLUE's turn)
-        player_channel = np.full((8, 8), 1 if self.current_player == DotsBoxes.RED else -1)
-
         # Stack all layers to form a single state representation
-        encoded_state = np.stack([horizontal_edges_padded, vertical_edges_padded, player_channel],
+        encoded_state = np.stack([horizontal_edges_padded, vertical_edges_padded],
                                  axis=0)  # Change here
 
         return encoded_state
